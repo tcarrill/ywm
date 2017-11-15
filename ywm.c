@@ -19,11 +19,14 @@ int main()
     }
 
     root = DefaultRootWindow(dpy);
-    XColor backgroundColor = create_color(dpy, "#50526F");
+    XColor backgroundColor = create_color(dpy, "#666797");
+    XColor darker = create_color(dpy, "#555555");
+    XColor lighter = create_color(dpy, "#D4D4D4");
+    XColor lighter2 = create_color(dpy, "#ACACAC");
     XSetWindowBackground(dpy, root,  backgroundColor.pixel);
     XClearWindow(dpy, root);
     GC gc = XCreateGC(dpy, root, 0, NULL);
-    
+
     XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("F1")), Mod1Mask, root,
             True, GrabModeAsync, GrabModeAsync);
     XGrabButton(dpy, 1, ControlMask, root, True, ButtonPressMask, GrabModeAsync,
@@ -62,10 +65,10 @@ int main()
 	}
 	else if(ev.type == ButtonPress && ev.xbutton.subwindow != None)
         {
-	  printf("%lx - %lx\n", ev.xbutton.window, ev.xbutton.subwindow);
-	  if (ev.xbutton.window == menu_item_wins[0])
+	  printf("%lx\n", ev.xbutton.subwindow);
+	  if (ev.xbutton.subwindow == menuWin)
 	    {
-	      printf("%s\n", menu_items[0].label);
+	      XAllowEvents(dpy, ReplayPointer, CurrentTime);
 	    }
 	  else
 	    {
@@ -97,6 +100,7 @@ int main()
 	}
 	else if (ev.type == Expose)
 	{
+
 	  XGetWindowAttributes(dpy, menuWin, &menu_attr);
 	  if (menu_attr.map_state != IsUnmapped)
 	    {
@@ -104,17 +108,60 @@ int main()
 	      
 	      for (int i = 0; i < len; i++)
 		{
-		XWindowAttributes menu_item_attr;
-		XGetWindowAttributes(dpy, menu_item_wins[i], &menu_item_attr);
-                		
+		  Window menu_btn = menu_item_wins[i];
+		  XWindowAttributes menu_item_attr;
+		  XGetWindowAttributes(dpy, menu_btn, &menu_item_attr);
+		  GC darkergc = XCreateGC(dpy, menu_btn, 0, NULL);
+		  GC lightergc = XCreateGC(dpy, menu_btn, 0, NULL);
+		  GC lightergc2 = XCreateGC(dpy, menu_btn, 0, NULL);
+		  XSetForeground(dpy, darkergc, darker.pixel);
+		  XSetForeground(dpy, lightergc, lighter.pixel);
+		  XSetForeground(dpy, lightergc2, lighter2.pixel);
+
+		  int width = menu_item_attr.width - 1;
+		  int height = menu_item_attr.height - 1;
+	        XDrawLine(dpy,
+			  menu_btn,
+			  lightergc,
+			  0, 0, width, 0);
+		XDrawLine(dpy,
+			  menu_btn,
+			  lightergc2,
+			  1, 1, width, 1);
+		XDrawLine(dpy,
+			  menu_btn,
+			  lightergc,
+			  0, 1, 0, height);
+		XDrawLine(dpy,
+			  menu_btn,
+			  lightergc2,
+			  1, 1, 1, height);
+		XDrawLine(dpy,
+			  menu_btn,
+			  darkergc,
+			  0, height - 1, width, height - 1);
+		XDrawLine(dpy,
+			  menu_btn,
+			  darkergc,
+			  width - 1, 1, width - 1, height - 1);
+		XDrawLine(dpy,
+			  menu_btn,
+			  DefaultGC(dpy, DefaultScreen(dpy)),
+			  width, 0, width, height);
+		XDrawLine(dpy,
+			  menu_btn,
+			  DefaultGC(dpy, DefaultScreen(dpy)),
+			  0, height, width, height); 
+ 
 		XDrawString(dpy,
-			    menu_item_wins[i],
+			    menu_btn,
 			    DefaultGC(dpy, DefaultScreen(dpy)),
-			    5,
-			    17,
+			    7,
+			    16,
 			    menu_items[i].label,
 			    strlen(menu_items[i].label));
 	       }
+	   
 	    }
 	}
     }
