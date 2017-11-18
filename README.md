@@ -7,8 +7,9 @@ This is under heavy development and will likely be broken at any given time.  I 
 
 ![ywm](https://i.imgur.com/aMC0R8r.png)
 
+## Usage
 Right mouse button root: Show root menu
 
-Mouse actions on windows
-Ctrl-right mouse button: Resize window
+###Mouse actions on windows
+Ctrl-right mouse button: Resize window\n
 Ctrl-left mouse button: Move window
