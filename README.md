@@ -6,3 +6,9 @@ Initially meant to be a Wayland compositor, hence the name "Yutani" (Weyland-Yut
 This is under heavy development and will likely be broken at any given time.  I haven't touched Xlib in over a decade and this, more than anything, is just a learning exercise for myself.
 
 ![ywm](https://i.imgur.com/aMC0R8r.png)
+
+Right mouse button root: Show root menu
+
+Mouse actions on windows
+Ctrl-right mouse button: Resize window
+Ctrl-left mouse button: Move window
