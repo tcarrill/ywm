@@ -1,6 +1,8 @@
 #include "menu.h"
 #include "util.h"
 
+
+
 Window create_menu(Display *dpy, GC gc, int black_color, int white_color)
 {
   XColor bg = create_color(dpy, "#AAAAAA");
