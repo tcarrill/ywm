@@ -8,7 +8,7 @@ This is under heavy development and will likely be broken at any given time.  I 
 ![ywm](https://i.imgur.com/aMC0R8r.png)
 
 ## Usage
-Right mouse button root: Show root menu
+Right mouse button anywhere but a window will show the root menu.
 
 ### Mouse actions on windows
 <kbd class='badmono'>Ctrl</kbd> + right mouse: Resize window<br/>
