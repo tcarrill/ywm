@@ -13,4 +13,4 @@ Right mouse button root: Show root menu
 ### Mouse actions on windows
 <kbd class='badmono'>Ctrl</kbd> + right mouse: Resize window<br/>
 <kbd class='badmono'>Ctrl</kbd> + middle mouse: Kill window<br/>
-<kbd class='badmono'>Ctrl</bbd> + left mouse: Move window</br>
+<kbd class='badmono'>Ctrl</kbd> + left mouse: Move window</br>
