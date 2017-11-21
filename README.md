@@ -5,7 +5,7 @@ Initially meant to be a Wayland compositor, hence the name "Yutani" (Weyland-Yut
 
 This is under heavy development and will likely be broken at any given time.  I haven't touched Xlib in over a decade and this, more than anything, is just a learning exercise for myself.
 
-![ywm](screenshot.png)
+![ywm](screenshot.png?raw=true)
 
 ## Usage
 Right mouse button anywhere but a window will show the root menu.
