@@ -3,46 +3,42 @@
 #include <X11/cursorfont.h>
 #include "menu.h"
 #include "util.h"
+#include "ywm.h"
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
+static void setup_wm_hints() {
+  atom_wm[AtomWMProtocols] = XInternAtom(dpy, "WM_PROTOCOLS", False);
+  atom_wm[AtomWMDeleteWindow] = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
+}
+
+static void setup_display() {
+  if(!(dpy = XOpenDisplay(0x0))) {
+    exit(1);
+  }
+
+  root = DefaultRootWindow(dpy);
+
+  XColor backgroundColor = create_color("#666797");
+  XSetWindowBackground(dpy, root, backgroundColor.pixel);
+
+  XClearWindow(dpy, root);
+  XDefineCursor(dpy, root, XCreateFontCursor(dpy, XC_left_ptr));
+}
+
 int main()
 {
-    Display * dpy;
-    Window root;
     XWindowAttributes attr;
     XButtonEvent start;
     XEvent ev;
 
-    if(!(dpy = XOpenDisplay(0x0)))
-    {
-      return 1;
-    }
+    setup_display();
+    setup_wm_hints();
 
-    root = DefaultRootWindow(dpy);
-    XColor backgroundColor = create_color(dpy, "#666797");
-    XColor darker = create_color(dpy, "#555555");
-    XColor lighter = create_color(dpy, "#D4D4D4");
-    XColor lighter2 = create_color(dpy, "#ACACAC");
-    XSetWindowBackground(dpy, root,  backgroundColor.pixel);
-    XClearWindow(dpy, root);
-    GC gc = XCreateGC(dpy, root, 0, NULL);
-    GC darkergc = XCreateGC(dpy, root, 0, NULL);
-    GC lightergc = XCreateGC(dpy, root, 0, NULL);
-    GC lightergc2 = XCreateGC(dpy, root, 0, NULL);
-    XSetForeground(dpy, darkergc, darker.pixel);
-    XSetForeground(dpy, lightergc, lighter.pixel);
-    XSetForeground(dpy, lightergc2, lighter2.pixel);
+    Window menu_win = create_menu();
 
-    XDefineCursor(dpy, root, XCreateFontCursor(dpy, XC_left_ptr));
-    
-    int blackColor = BlackPixel(dpy, DefaultScreen(dpy));
-    int whiteColor = WhitePixel(dpy, DefaultScreen(dpy));
-    Window menuWin = create_menu(dpy, gc, blackColor, whiteColor);
-   
     XSelectInput(dpy, root, ButtonPressMask | ButtonReleaseMask);
     XWindowAttributes menu_attr;
-    int len = sizeof(menu_items) / sizeof(menu_items[0]);
 
     // TODO: refactor event handling, put in event.c file
     // delegate responsibility, i.e. menu events handled in menu.c
@@ -51,36 +47,34 @@ int main()
       	if(ev.type == KeyPress && ev.xkey.subwindow != None) {
             XRaiseWindow(dpy, ev.xkey.subwindow);
       	} else if (ev.type == ButtonPress) {
-	  		if (ev.xbutton.state & ControlMask) {
+	  		if (ev.xbutton.state & ControlMask && ev.xbutton.subwindow != None) {
 	  			if (ev.xbutton.button == 2) {
-	  				XDestroyWindow(dpy, ev.xbutton.subwindow);
-	  				// TODO: kill pid	
+  				  send_wm_delete(ev.xbutton.subwindow);
 	  			} else {
 	  				XRaiseWindow(dpy, ev.xbutton.subwindow);
 	  				XGrabPointer(dpy, ev.xbutton.subwindow, True,
-			 		PointerMotionMask | ButtonReleaseMask, GrabModeAsync, GrabModeAsync,
-			 		None, None, CurrentTime);
+			 		        PointerMotionMask | ButtonReleaseMask, GrabModeAsync, GrabModeAsync,
+			 		            None, None, CurrentTime);
 
 	    			XGetWindowAttributes(dpy, ev.xbutton.subwindow, &attr);
 	    			start = ev.xbutton;
 	  			}
 			} else if (ev.xbutton.window == root && ev.xbutton.button == Button3 && ev.xbutton.subwindow == None) {
-		    	XGetWindowAttributes(dpy, menuWin, &menu_attr);
+		    	XGetWindowAttributes(dpy, menu_win, &menu_attr);
 		    	if (menu_attr.map_state == IsUnmapped) {
-		        	XMoveWindow(dpy, menuWin, ev.xbutton.x_root, ev.xbutton.y_root);
-					XRaiseWindow(dpy, menuWin);
-	       	        XMapWindow(dpy, menuWin);
+		        	XMoveWindow(dpy, menu_win, ev.xbutton.x_root, ev.xbutton.y_root);
+					    XRaiseWindow(dpy, menu_win);
+	       	    XMapWindow(dpy, menu_win);
 		    	} else {
-		        	XUnmapWindow(dpy, menuWin);
+		        	XUnmapWindow(dpy, menu_win);
 		    	}
 			} else if (menu_attr.map_state != IsUnmapped && ev.xbutton.button == Button1) {
-			    int menu_index;
-			    for (menu_index = 0; menu_index < len; menu_index++) {
-			      if (menu_item_wins[menu_index] == ev.xbutton.window) {
-					fork_exec(menu_items[menu_index].command);
-			        XUnmapWindow(dpy, menuWin);
-					break;
-			      }
+			    for (int i = 0; i < MENU_SIZE; i++) {
+			         if (menu_item_wins[i] == ev.xbutton.window) {
+					            fork_exec(menu_items[i].command);
+			                XUnmapWindow(dpy, menu_win);
+					            break;
+			         }
 			    }
 	  		}
     	} else if(ev.type == MotionNotify) {
@@ -90,64 +84,18 @@ int main()
             xdiff = ev.xbutton.x_root - start.x_root;
             ydiff = ev.xbutton.y_root - start.y_root;
             XMoveResizeWindow(dpy, ev.xmotion.window,
-                attr.x + (start.button==1 ? xdiff : 0),
-                attr.y + (start.button==1 ? ydiff : 0),
-                MAX(1, attr.width + (start.button==3 ? xdiff : 0)),
-                MAX(1, attr.height + (start.button==3 ? ydiff : 0)));
+                attr.x + (start.button == 1 ? xdiff : 0),
+                attr.y + (start.button == 1 ? ydiff : 0),
+                MAX(1, attr.width + (start.button == 3 ? xdiff : 0)),
+                MAX(1, attr.height + (start.button == 3 ? ydiff : 0)));
         } else if(ev.type == ButtonRelease) {
 	    	XUngrabPointer(dpy, CurrentTime);
 		} else if (ev.type == Expose) {
-		  XGetWindowAttributes(dpy, menuWin, &menu_attr);
-		  if (menu_attr.map_state != IsUnmapped) {
-		  	for (int i = 0; i < len; i++) {
+		  XGetWindowAttributes(dpy, menu_win, &menu_attr);
 
-				Window menu_btn = menu_item_wins[i];
-				XWindowAttributes menu_item_attr;
-				XGetWindowAttributes(dpy, menu_btn, &menu_item_attr);
-				int width = menu_item_attr.width - 1;
-				int height = menu_item_attr.height - 1;
-			    XDrawLine(dpy,
-				  menu_btn,
-				  lightergc,
-				  0, 0, width, 0);
-				XDrawLine(dpy,
-				  menu_btn,
-				  lightergc2,
-				  1, 1, width, 1);
-				XDrawLine(dpy,
-				  menu_btn,
-				  lightergc,
-				  0, 1, 0, height);
-				XDrawLine(dpy,
-				  menu_btn,
-				  lightergc2,
-				  1, 1, 1, height);
-				XDrawLine(dpy,
-				  menu_btn,
-				  darkergc,
-				  0, height - 1, width, height - 1);
-				XDrawLine(dpy,
-				  menu_btn,
-				  darkergc,
-				  width - 1, 1, width - 1, height - 1);
-				XDrawLine(dpy,
-				  menu_btn,
-				  DefaultGC(dpy, DefaultScreen(dpy)),
-				  width, 0, width, height);
-				XDrawLine(dpy,
-				  menu_btn,
-				  DefaultGC(dpy, DefaultScreen(dpy)),
-				  0, height, width, height); 
-		 		XDrawString(dpy,
-		  	      menu_btn,
-				  DefaultGC(dpy, DefaultScreen(dpy)),
-				  7,
-				  16,
-				  menu_items[i].label,
-				  strlen(menu_items[i].label));
-		       }
-	   
-	    	}
-		}
+		  if (menu_attr.map_state != IsUnmapped) {
+        draw_menu();
+		  }
     }
+  }
 }
