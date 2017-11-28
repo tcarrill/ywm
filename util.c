@@ -44,24 +44,22 @@ void fork_exec(char *cmd)
 void send_wm_delete(Window window)
 {
   int count;
-  int has_delete_hint = 0;
+  int has_delete_atom = 0;
   Atom *protocols;
 
   if (XGetWMProtocols(dpy, window, &protocols, &count)) {
       for (int i = 0; i < count; i++) {
 	       if (protocols[i] == atom_wm[AtomWMDeleteWindow]) {
-	          has_delete_hint = 1;
+	          has_delete_atom = 1;
             break;
 	       }
 	    }
       XFree(protocols);
   }
 
-  if (has_delete_hint) {
-      printf("Properly killing client\n");
+  if (has_delete_atom) {
       send_xmessage(window, atom_wm[AtomWMProtocols], atom_wm[AtomWMDeleteWindow]);
   } else {
-      printf("Force killing client\n");
       XKillClient(dpy, window);
   }
 }

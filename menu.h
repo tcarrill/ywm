@@ -7,11 +7,7 @@
 #include "ywm.h"
 
 #define MENU_MAX_WIDTH  175
-#define MENU_ITEM_HEIGHT 25
-#define MENU_BG_COLOR "#AAAAAA"
-#define MENU_BORDER_DARK "#555555"
-#define MENU_BORDER_LIGHT "#D4D4D4"
-#define MENU_BORDER_LIGHT2 "#ACACAC"
+#define MENU_ITEM_HEIGHT 22
 #define MENU_SIZE  6
 
 GC menu_border_dark_gc, menu_border_light_gc, menu_border_light2_gc;
@@ -44,5 +40,6 @@ Window menu_item_wins[MENU_SIZE];
 
 Window create_menu();
 void draw_menu();
-
+void free_menu();
+void flash_menu();
 #endif

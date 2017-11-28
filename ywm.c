@@ -71,9 +71,10 @@ int main()
 			} else if (menu_attr.map_state != IsUnmapped && ev.xbutton.button == Button1) {
 			    for (int i = 0; i < MENU_SIZE; i++) {
 			         if (menu_item_wins[i] == ev.xbutton.window) {
-					            fork_exec(menu_items[i].command);
-			                XUnmapWindow(dpy, menu_win);
-					            break;
+                 flash_menu(i);
+					       fork_exec(menu_items[i].command);
+			           XUnmapWindow(dpy, menu_win);
+					       break;
 			         }
 			    }
 	  		}
@@ -91,11 +92,13 @@ int main()
         } else if(ev.type == ButtonRelease) {
 	    	XUngrabPointer(dpy, CurrentTime);
 		} else if (ev.type == Expose) {
-		  XGetWindowAttributes(dpy, menu_win, &menu_attr);
+      if (ev.xexpose.count == 0) {
+        XGetWindowAttributes(dpy, menu_win, &menu_attr);
 
-		  if (menu_attr.map_state != IsUnmapped) {
-        draw_menu();
-		  }
+        if (menu_attr.map_state != IsUnmapped) {
+          draw_menu();
+        }
+      }
     }
   }
 }
