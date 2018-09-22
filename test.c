@@ -21,6 +21,13 @@ MenuItem * menuItem_new(char *label, char *command, int index)
 	return menuItem;
 }
 
+void destroy_menuItem(void *data) {
+	MenuItem *item = (MenuItem *)data;
+	printf("Freeing label, command\n");
+	free(item->label);
+	free(item->command);
+}
+
 int main() 
 {
 	FILE *fp;
@@ -61,11 +68,12 @@ int main()
 	printf("Menu Items: %d\n", list->length);
 	YNode *curr = list->head;
 	while (curr != NULL) {
-		MenuItem *menuItem = (MenuItem*)curr->data;
+		MenuItem *menuItem = (MenuItem *)curr->data;
 		printf("%d: %s (%s)\n", menuItem->id, menuItem->label, menuItem->command);
 		curr = curr->next;
 	}
 	
-	ylist_destroy(list);
+	YDestroyFunc destroy_func = destroy_menuItem;
+	ylist_destroy_deep(list, destroy_func);
 	exit(EXIT_SUCCESS);
 }
