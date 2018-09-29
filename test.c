@@ -15,6 +15,7 @@ MenuItem * menuItem_new(char *label, char *command, int index)
 	menuItem->id = index;
 	menuItem->label = malloc(sizeof(char) * strlen(label));
 	menuItem->command = malloc(sizeof(char) * strlen(command));
+	printf("Alloc'ed: Label(%p) Command(%p)\n", menuItem->label, menuItem->command);
 	strncpy(menuItem->label, label, strlen(label));
 	strncpy(menuItem->command, command, strlen(command));
 	
@@ -23,7 +24,7 @@ MenuItem * menuItem_new(char *label, char *command, int index)
 
 void destroy_menuItem(void *data) {
 	MenuItem *item = (MenuItem *)data;
-	printf("Freeing label, command\n");
+	printf("Freed: Label(%p) Command(%p)\n", item->label, item->command);
 	free(item->label);
 	free(item->command);
 }
@@ -73,7 +74,6 @@ int main()
 		curr = curr->next;
 	}
 	
-	YDestroyFunc destroy_func = destroy_menuItem;
-	ylist_destroy_deep(list, destroy_func);
+	ylist_destroy_deep(list, destroy_menuItem);
 	exit(EXIT_SUCCESS);
 }
