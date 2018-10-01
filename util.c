@@ -51,7 +51,7 @@ void send_wm_delete(Window window)
       for (int i = 0; i < count; i++) {
 	       if (protocols[i] == atom_wm[AtomWMDeleteWindow]) {
 	          has_delete_atom = 1;
-            break;
+              break;
 	       }
 	    }
       XFree(protocols);

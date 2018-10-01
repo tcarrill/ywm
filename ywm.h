@@ -11,4 +11,6 @@ enum AtomsWM {
 };
 
 Atom atom_wm[NumberOfAtoms];
+
+void frame(Display *dpy, Window root, Window win);
 #endif
