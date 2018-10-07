@@ -2,7 +2,10 @@
 #define EVENT_H
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <X11/Xlib.h>
+#include "ywm.h"
+#include "util.h"
 
 void on_key_press(Display* dpy, const XKeyEvent* ev);
 void on_button_press(Display* dpy, const XButtonEvent* ev);

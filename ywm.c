@@ -1,25 +1,27 @@
-#include <stdlib.h>
 #include <string.h>
 #include <X11/cursorfont.h>
+#include <X11/Xlib.h>
 #include "menu.h"
 #include "util.h"
 #include "ywm.h"
 #include "event.h"
 
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-
-static void setup_wm_hints() {
+static void setup_wm_hints() 
+{
   atom_wm[AtomWMProtocols] = XInternAtom(dpy, "WM_PROTOCOLS", False);
   atom_wm[AtomWMDeleteWindow] = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
 }
 
-static void setup_display() {
-  if(!(dpy = XOpenDisplay(0x0))) {
+static void setup_display() 
+{
+  if (!(dpy = XOpenDisplay(0x0))) {
     exit(1);
   }
 
   root = DefaultRootWindow(dpy);
-
+  printf("Root window: %lu\n", root);
+  fflush(stdout);
+  
   XColor backgroundColor = create_color("#666797");
   XSetWindowBackground(dpy, root, backgroundColor.pixel);
 
@@ -27,69 +29,111 @@ static void setup_display() {
   XDefineCursor(dpy, root, XCreateFontCursor(dpy, XC_left_ptr));
 }
 
-// void on_window_move(XEvent ev)
-// {
-//     int xdiff, ydiff;
-//     while(XCheckTypedEvent(dpy, MotionNotify, &ev));
-//
-//     xdiff = ev.xbutton.x_root - start.x_root;
-//     ydiff = ev.xbutton.y_root - start.y_root;
-//     XMoveResizeWindow(dpy, ev.xmotion.window,
-//         attr.x + (start.button == 1 ? xdiff : 0),
-//         attr.y + (start.button == 1 ? ydiff : 0),
-//         MAX(1, attr.width + (start.button == 3 ? xdiff : 0)),
-//         MAX(1, attr.height + (start.button == 3 ? ydiff : 0)));
-// }
-
-void frame(Display* dpy, Window root, Window win) 
+void draw_close_button(Display* dpy, Window win) 
 {
 	XWindowAttributes x_window_attrs;
 	XGetWindowAttributes(dpy, win, &x_window_attrs);
-    const Window frame = XCreateSimpleWindow(
+    close_button = XCreateSimpleWindow(
+         dpy,
+         win,
+         x_window_attrs.x + 5,
+         x_window_attrs.y + 5,
+         10,
+         10,
+         1,
+         0x000000,
+         0xdf2020);
+				
+	XSelectInput(
+	         dpy,
+	         close_button,
+	         ButtonPressMask | ButtonReleaseMask | ButtonMotionMask);
+			   
+	XMapWindow(dpy, close_button);
+		
+	printf("Close Button: %lu\n", close_button);
+	printf("    on frame: %lu\n", win);
+	fflush(stdout);	 
+}
+
+void frame(Display* dpy, Window root, Window win) 
+{
+	XWindowAttributes attrs;
+	XGetWindowAttributes(dpy, win, &attrs);
+	
+    Window frame = XCreateSimpleWindow(
          dpy,
          root,
-         x_window_attrs.x,
-         x_window_attrs.y,
-         x_window_attrs.width,
-         x_window_attrs.height,
-         5,
-         0xadadad,
-         0x0000ff);
+         attrs.x,
+         attrs.y,
+         attrs.width + 10,
+         attrs.height + 26,
+         1,
+         0x000000,
+         0xaaaaaa);
 		 		 
 	XSelectInput(
          dpy,
          frame,
-         SubstructureRedirectMask | SubstructureNotifyMask);
+         SubstructureRedirectMask | SubstructureNotifyMask | ButtonPressMask | ButtonReleaseMask);
 		 
-     // Add client to save set, so that it will be restored and kept alive if we crash.
-     XAddToSaveSet(dpy, win);
+	XAddToSaveSet(dpy, win);
 
-     XReparentWindow(
+    XReparentWindow(
          dpy,
          win,
          frame,
-         0, 0);  // Offset of client window within frame.
+         4, 20);  // Offset of client window within frame.
 
+	 // TODO: map client window to frame with hashmap instead of list
+	 // Client *client = &(Client){ .client = win, .frame = frame };
+ // 	 ylist_add_tail(clients, client);
+ // 	 printf("Added client: %lu with frame: %lu\n", client->client, client->frame);
+ // 	 printf("Clients managed: %d\n", clients->length);
+	 draw_close_button(dpy, frame);
 	 XMapWindow(dpy, frame);
 	
+	printf("Frame: %lu\n", frame);
+	printf("Client: %lu\n", win);
+	fflush(stdout);
+	 // XGrabButton(
+	 //       dpy,
+	 //       Button1,
+	 //       None,
+	 //       frame,
+	 //       False,
+	 //       ButtonPressMask | ButtonReleaseMask | ButtonMotionMask,
+	 //       GrabModeAsync,
+	 //       GrabModeAsync,
+	 //       None,
+	 //       None);
+	 //   //   b. Resize windows with alt + right button.
+	 //  XGrabButton(
+	 //       dpy,
+	 //       Button3,
+	 //       None,
+	 //       frame,
+	 //       False,
+	 //       ButtonPressMask | ButtonReleaseMask | ButtonMotionMask,
+	 //       GrabModeAsync,
+	 //       GrabModeAsync,
+	 //       None,
+	 //       None);
 }
 
 int main()
 {
-    XWindowAttributes attr;
-    XButtonEvent start;
     XEvent ev;
 
     setup_display();
     setup_wm_hints();
 
-    Window menu_win = create_menu();
+	// clients = ylist_new();
+    // Window menu_win = create_menu();
+    // XWindowAttributes menu_attr;
 
-    XSelectInput(dpy, root, SubstructureRedirectMask | SubstructureNotifyMask | ButtonPressMask | ButtonReleaseMask);
-    XWindowAttributes menu_attr;
+    XSelectInput(dpy, root, SubstructureRedirectMask | SubstructureNotifyMask);
 
-    // TODO: refactor event handling, put in event.c file
-    // delegate responsibility, i.e. menu events handled in menu.c
     while (True) {
         XNextEvent(dpy, &ev);
 		printf("Received event: %d\n", ev.type);
@@ -105,6 +149,8 @@ int main()
 				on_button_release(dpy, &ev.xbutton);
 				break;
 			case MotionNotify:
+				// Skip any already pending motion events.
+	        	while (XCheckTypedWindowEvent(dpy, ev.xmotion.window, MotionNotify, &ev)) {}
 				on_motion_notify(dpy, &ev.xmotion);
 				break;
 			case Expose:
@@ -123,59 +169,10 @@ int main()
 				on_configure_request(dpy, &ev.xconfigurerequest);
 				break;
 			case MapRequest:
-				on_map_request(dpy, root, &ev.xmap);
+				on_map_request(dpy, root, &ev.xmaprequest);
 				break;
 			default:
 				printf("Ignoring event\n");
 		}
-		
-		// if(ev.type == KeyPress) {
-//             on_key_press(dpy, ev.xkey);
-//       	} else if (ev.type == ButtonPress) {
-// 	  		if (ev.xbutton.state & ControlMask && ev.xbutton.subwindow != None) {
-// 	  			if (ev.xbutton.button == 2) {
-//   				  send_wm_delete(ev.xbutton.subwindow);
-// 	  			} else {
-// 	  				XRaiseWindow(dpy, ev.xbutton.subwindow);
-// 	  				XGrabPointer(dpy, ev.xbutton.subwindow, True,
-// 			 		        PointerMotionMask | ButtonReleaseMask, GrabModeAsync, GrabModeAsync,
-// 			 		        None, None, CurrentTime);
-//
-// 	    			XGetWindowAttributes(dpy, ev.xbutton.subwindow, &attr);
-// 	    			start = ev.xbutton;
-// 	  			}
-// 			} else if (ev.xbutton.window == root && ev.xbutton.button == Button3 && ev.xbutton.subwindow == None) {
-// 		    	XGetWindowAttributes(dpy, menu_win, &menu_attr);
-// 		    	if (menu_attr.map_state == IsUnmapped) {
-// 		        	XMoveWindow(dpy, menu_win, ev.xbutton.x_root, ev.xbutton.y_root);
-// 					XRaiseWindow(dpy, menu_win);
-// 	       	    	XMapWindow(dpy, menu_win);
-// 		    	} else {
-// 		       		XUnmapWindow(dpy, menu_win);
-// 		    	}
-// 			} else if (menu_attr.map_state != IsUnmapped && ev.xbutton.button == Button1) {
-// 			    for (int i = 0; i < MENU_SIZE; i++) {
-// 			         if (menu_item_wins[i] == ev.xbutton.window) {
-//                  		flash_menu(i);
-// 					 	fork_exec(menu_items[i].command);
-// 			         	XUnmapWindow(dpy, menu_win);
-// 					 	break;
-// 			         }
-// 			    }
-// 	  		}
-//     	} else if(ev.type == MotionNotify) {
-//             on_window_move(ev);
-//         } else if(ev.type == ButtonRelease) {
-// 	    	XUngrabPointer(dpy, CurrentTime);
-// 		} else if (ev.type == Expose) {
-//       	  if (ev.xexpose.count == 0) {
-//         	  XGetWindowAttributes(dpy, menu_win, &menu_attr);
-//
-//         	  if (menu_attr.map_state != IsUnmapped) {
-//           		draw_menu();
-//        	 	  }
-//       	 	}
-//     }
-		
   }
 }
