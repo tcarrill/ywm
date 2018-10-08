@@ -6,11 +6,13 @@
 #include "ywm.h"
 #include "event.h"
 
+#define FRAME_COLOR "#aaaaaa"
 #define STRIP_LIGHT "#cacaca"
 #define STRIP_DARK "#6a6a6a"
 
 GC strip_light_gc;
 GC strip_dark_gc;
+GC frame_gc;
 	
 static void setup_wm_hints() 
 {
@@ -20,6 +22,7 @@ static void setup_wm_hints()
 
 static void setup_display() 
 {
+  
   if (!(dpy = XOpenDisplay(0x0))) {
     exit(1);
   }
@@ -31,6 +34,18 @@ static void setup_display()
   XColor backgroundColor = create_color("#666797");
   XSetWindowBackground(dpy, root, backgroundColor.pixel);
 
+  title_font = XLoadQueryFont(dpy, DEF_FONT);
+  if (title_font == NULL) {
+  		printf("XLoadQueryFont(): font '%s' not found", DEF_FONT);
+  		exit(1);
+  }
+  
+  XGCValues gv;
+  gv.function = GXcopy;
+  gv.font = title_font->fid;
+  gv.foreground = 0x000000;
+  text_gc = XCreateGC(dpy, root, GCFunction|GCForeground|GCFont, &gv);
+
   XClearWindow(dpy, root);
   XDefineCursor(dpy, root, XCreateFontCursor(dpy, XC_left_ptr));
 }
@@ -39,14 +54,35 @@ void redraw(Display* dpy, Client *client)
 { 
  XWindowAttributes frame_attrs;
  XGetWindowAttributes(dpy, client->frame, &frame_attrs);
+ 
+ int title_length = XTextWidth(title_font, client->title, strlen(client->title)); 	
+ int titlex = (frame_attrs.width / 2) - (title_length / 2);
+ 
  int yoffset = 3;
  for (int i = 0; i < 12; i++) {
  		 if (i % 2 == 0) {
- 			 XDrawLine(dpy, client->frame, strip_light_gc, frame_attrs.x + 25, yoffset + i, frame_attrs.width - 25, yoffset + i);
+ 			 XDrawLine(dpy, client->frame, strip_light_gc, frame_attrs.x + 22, yoffset + i, titlex - 10, yoffset + i);
+			 XDrawLine(dpy, client->frame, strip_light_gc, titlex + title_length + 7, yoffset + i, frame_attrs.width - 30, yoffset + i);
  		 } else {
- 			 XDrawLine(dpy, client->frame, strip_dark_gc, frame_attrs.x + 26, yoffset + i, frame_attrs.width - 24, yoffset + i);
+ 			 XDrawLine(dpy, client->frame, strip_dark_gc, frame_attrs.x + 23, yoffset + i, titlex - 9, yoffset + i);
+			 XDrawLine(dpy, client->frame, strip_dark_gc, titlex + title_length + 8, yoffset + i, frame_attrs.width - 29, yoffset + i);
  		 }
   }
+  
+  // light border
+  XDrawLine(dpy, client->frame, strip_light_gc, 0, 0, frame_attrs.width, 0);
+  XDrawLine(dpy, client->frame, strip_light_gc, 0, 1, 0, frame_attrs.height - 1);
+  XDrawLine(dpy, client->frame, strip_light_gc, frame_attrs.width - 4, 20, frame_attrs.width - 4, frame_attrs.height - 4);
+  XDrawLine(dpy, client->frame, strip_light_gc, 4, frame_attrs.height - 4, frame_attrs.width - 4, frame_attrs.height - 4);  
+    
+  // dark border
+  XDrawLine(dpy, client->frame, strip_dark_gc, frame_attrs.width - 1, 1, frame_attrs.width - 1, frame_attrs.height);
+  XDrawLine(dpy, client->frame, strip_dark_gc, 1, frame_attrs.height - 1, frame_attrs.width, frame_attrs.height - 1);
+  XDrawLine(dpy, client->frame, strip_dark_gc, 3, 19, 3, frame_attrs.height - 4);
+  XDrawLine(dpy, client->frame, strip_dark_gc, 4, 19, frame_attrs.width - 4, 19);  
+  
+  //XFillRectangle(dpy, client->frame, frame_gc, titlex - 10, 3, title_length + 20, 12);
+  XDrawString(dpy, client->frame, text_gc, titlex, 13, client->title, strlen(client->title));
 }
 
 Window create_close_button(Display* dpy, Window win) 
@@ -110,10 +146,11 @@ void frame(Display* dpy, Window root, Window win)
 	 client->client = win;
 	 client->frame = frame;
 	 client->close_button = close_button;
-	
+	 XFetchName(dpy, win, &client->title);
+	 
  	 ylist_add_tail(clients, client);
- 	 printf("Client {\n   client = %lu,\n   frame = %lu,\n   close_button = %lu\n}\n", client->client, client->frame, client->close_button);
-	 fflush(stdout);
+ 	 // printf("Client {\n   title = %s,\n   client = %lu,\n   frame = %lu,\n   close_button = %lu\n}\n", client->title, client->client, client->frame, client->close_button);
+	 // fflush(stdout);
 	 
 	 XMapWindow(dpy, frame);
 }
@@ -138,6 +175,9 @@ int main()
  
     gcv.foreground = create_color(STRIP_DARK).pixel;
     strip_dark_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
+
+    gcv.foreground = create_color(FRAME_COLOR).pixel;
+    frame_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
 
 	clients = ylist_new();
     // Window menu_win = create_menu();

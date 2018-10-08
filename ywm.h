@@ -3,6 +3,11 @@
 #include <stdlib.h>
 #include "ylist.h"
 
+#define DEF_FONT "-b&h-lucida-medium-r-*-*-11-*-*-*-*-*-*-*"
+
+XFontStruct *title_font;
+GC text_gc;
+
 Display *dpy;
 Window root;
 Window close_button;
@@ -25,6 +30,7 @@ typedef struct {
 } Rect;
 
 typedef struct {
+	char *title;
 	Window close_button;
 	Window client;
 	Window frame;
