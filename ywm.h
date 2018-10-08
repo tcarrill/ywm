@@ -3,9 +3,6 @@
 #include <stdlib.h>
 #include "ylist.h"
 
-#define STRIP_COLOR1 0xcacaca
-#define STRIP_COLOR2 0x6a6a6a
-
 Display *dpy;
 Window root;
 Window close_button;
@@ -40,4 +37,5 @@ Rect window_start;
 YList* clients;
 
 void frame(Display *dpy, Window root, Window win);
+void redraw(Display *dpy, Client *client);
 #endif

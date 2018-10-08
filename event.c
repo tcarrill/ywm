@@ -11,25 +11,8 @@ void on_key_press(Display* dpy, const XKeyEvent *ev)
 
 void on_button_press(Display* dpy, const XButtonEvent *ev)
 {
-	// printf("\ton_button_press()\n");
-	// YNode* curr = clients->head;
-	// Client* client = NULL;
-	// printf("ev->window: %lu\n", ev->window);
-	// while (curr != NULL) {
-	// 	client = (Client *)curr->data;
-	// 	printf("client->frame: %lu\n", client->frame);
-	// 	if (client->frame == ev->window) {
-	// 		printf("Found client!");
-	// 		break;
-	// 	}
-	//
-	// 	curr = curr->next;
-	// }
-	//
-	// if (client == NULL) {
-	// 	printf("!!! HEY - Could not find client in managed clients list!\n");
-	// 	return;
-	// }
+	printf("\ton_button_press()\n");
+
 	if (ev->window == root) {
 		if (ev->button == Button3) {
 			printf("Showing Application Menu\n");
@@ -70,16 +53,12 @@ void on_button_press(Display* dpy, const XButtonEvent *ev)
 void on_button_release(Display* dpy, const XButtonEvent *ev)
 {
 	printf("\ton_button_release()\n");
-	printf("ev->root: %lu\n", ev->root);
-	printf("ev->window: %lu\n", ev->window);
-	printf("ev->subwindow: %lu\n", ev->subwindow);
-	fflush(stdout);
 	
-	if (ev->window == close_button) {
-		printf("\tclose button pressed\n");
-		fflush(stdout);
-		send_wm_delete(ev->window);
+	Client *c = find_client_by_type(ev->window, CLOSE_BTN);
+	if (c != NULL) {
+		send_wm_delete(c->client);		
 	}
+	
 	XUngrabPointer(dpy, CurrentTime);
 }
 
@@ -89,8 +68,9 @@ void on_motion_notify(Display* dpy, const XMotionEvent *ev)
 
 	int xdiff = ev->x_root - cursor_start_point.x;
 	int ydiff = ev->y_root - cursor_start_point.y;
-
-	if (ev->state & Button1Mask) {
+	Client *c = find_client(ev->window);
+	
+	if (ev->state & Button1Mask && c->close_button != ev->window) {
 		XMoveWindow(
 		        dpy,
 		        ev->window,
@@ -103,7 +83,11 @@ void on_motion_notify(Display* dpy, const XMotionEvent *ev)
 
 void on_expose(Display* dpy, const XExposeEvent *ev)
 {
-	// printf("\ton_expose()\n");
+	printf("\ton_expose()\n");
+	Client* c = find_client(ev->window);
+	if (c != NULL) {
+		redraw(dpy, c);
+	}
 }
 
 void on_reparent_notify(Display* dpy, const XReparentEvent *ev)
@@ -123,7 +107,7 @@ void on_destroy_notify(Display* dpy, const XDestroyWindowEvent *ev)
 
 void on_configure_request(Display* dpy, const XConfigureRequestEvent *ev)
 {
-	// printf("\ton_configure_request()\n");
+	printf("\ton_configure_request()\n");
 	XWindowChanges changes;
 	// Copy fields from e to changes.
 	changes.x = ev->x;

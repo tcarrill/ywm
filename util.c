@@ -1,18 +1,18 @@
 #include "util.h"
 
 
-static int send_xmessage(Window w, Atom a, long x)
+static int send_xmessage(Window win, Atom atom, long x)
 {
-	XClientMessageEvent e;
+	XClientMessageEvent ev;
 
-	e.type = ClientMessage;
-	e.window = w;
-	e.message_type = a;
-	e.format = 32;
-	e.data.l[0] = x;
-	e.data.l[1] = CurrentTime;
+	ev.type = ClientMessage;
+	ev.window = win;
+	ev.message_type = atom;
+	ev.format = 32;
+	ev.data.l[0] = x;
+	ev.data.l[1] = CurrentTime;
 
-	return XSendEvent(dpy, w, False, NoEventMask, (XEvent *)&e);
+	return XSendEvent(dpy, win, False, NoEventMask, (XEvent *)&ev);
 }
 
 void fork_exec(char *cmd)
@@ -71,4 +71,40 @@ XColor create_color(char *hex)
   XParseColor(dpy, colormap, hex, &color);
   XAllocColor(dpy, colormap, &color);
   return color;
+}
+
+Client* find_client_by_type(Window win, int type) 
+{
+	YNode* curr = clients->head;
+	Client* client = NULL;
+	while (curr != NULL) {
+		client = (Client *)curr->data;		
+		
+		if (type == FRAME && client->frame == win) {
+			return client;
+		} else if (type == CLIENT && client->client == win) {
+			return client;
+		} else if (type == CLOSE_BTN && client->close_button == win) {
+			return client;
+		}
+		
+		curr = curr->next;
+	}
+	return NULL;
+}
+
+Client* find_client(Window win) 
+{
+	YNode* curr = clients->head;
+	Client* client = NULL;
+	while (curr != NULL) {
+		client = (Client *)curr->data;		
+		
+		if (client->frame == win || client->client == win || client->close_button == win) {
+			return client;
+		}
+		
+		curr = curr->next;
+	}
+	return NULL;
 }

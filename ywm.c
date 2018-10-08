@@ -6,6 +6,12 @@
 #include "ywm.h"
 #include "event.h"
 
+#define STRIP_LIGHT "#cacaca"
+#define STRIP_DARK "#6a6a6a"
+
+GC strip_light_gc;
+GC strip_dark_gc;
+	
 static void setup_wm_hints() 
 {
   atom_wm[AtomWMProtocols] = XInternAtom(dpy, "WM_PROTOCOLS", False);
@@ -29,7 +35,21 @@ static void setup_display()
   XDefineCursor(dpy, root, XCreateFontCursor(dpy, XC_left_ptr));
 }
 
-void draw_close_button(Display* dpy, Window win) 
+void redraw(Display* dpy, Client *client) 
+{ 
+ XWindowAttributes frame_attrs;
+ XGetWindowAttributes(dpy, client->frame, &frame_attrs);
+ int yoffset = 3;
+ for (int i = 0; i < 12; i++) {
+ 		 if (i % 2 == 0) {
+ 			 XDrawLine(dpy, client->frame, strip_light_gc, frame_attrs.x + 25, yoffset + i, frame_attrs.width - 25, yoffset + i);
+ 		 } else {
+ 			 XDrawLine(dpy, client->frame, strip_dark_gc, frame_attrs.x + 26, yoffset + i, frame_attrs.width - 24, yoffset + i);
+ 		 }
+  }
+}
+
+Window create_close_button(Display* dpy, Window win) 
 {
 	XWindowAttributes x_window_attrs;
 	XGetWindowAttributes(dpy, win, &x_window_attrs);
@@ -37,23 +57,21 @@ void draw_close_button(Display* dpy, Window win)
          dpy,
          win,
          x_window_attrs.x + 5,
-         x_window_attrs.y + 5,
+         x_window_attrs.y + 3,
          10,
          10,
          1,
          0x000000,
-         0xdf2020);
+         0xfc5b57);
 				
 	XSelectInput(
 	         dpy,
 	         close_button,
-	         ButtonPressMask | ButtonReleaseMask | ButtonMotionMask);
+	         ButtonPressMask | ButtonReleaseMask);
 			   
 	XMapWindow(dpy, close_button);
-		
-	printf("Close Button: %lu\n", close_button);
-	printf("    on frame: %lu\n", win);
-	fflush(stdout);	 
+	
+	return close_button;
 }
 
 void frame(Display* dpy, Window root, Window win) 
@@ -71,11 +89,11 @@ void frame(Display* dpy, Window root, Window win)
          1,
          0x000000,
          0xaaaaaa);
-		 		 
+			
 	XSelectInput(
          dpy,
          frame,
-         SubstructureRedirectMask | SubstructureNotifyMask | ButtonPressMask | ButtonReleaseMask);
+         SubstructureRedirectMask | SubstructureNotifyMask | ButtonPressMask | ButtonReleaseMask | ExposureMask);
 		 
 	XAddToSaveSet(dpy, win);
 
@@ -84,41 +102,25 @@ void frame(Display* dpy, Window root, Window win)
          win,
          frame,
          4, 20);  // Offset of client window within frame.
-
-	 // TODO: map client window to frame with hashmap instead of list
-	 // Client *client = &(Client){ .client = win, .frame = frame };
- // 	 ylist_add_tail(clients, client);
- // 	 printf("Added client: %lu with frame: %lu\n", client->client, client->frame);
- // 	 printf("Clients managed: %d\n", clients->length);
-	 draw_close_button(dpy, frame);
-	 XMapWindow(dpy, frame);
+	 
+	 Window close_button = create_close_button(dpy, frame);
 	
-	printf("Frame: %lu\n", frame);
-	printf("Client: %lu\n", win);
-	fflush(stdout);
-	 // XGrabButton(
-	 //       dpy,
-	 //       Button1,
-	 //       None,
-	 //       frame,
-	 //       False,
-	 //       ButtonPressMask | ButtonReleaseMask | ButtonMotionMask,
-	 //       GrabModeAsync,
-	 //       GrabModeAsync,
-	 //       None,
-	 //       None);
-	 //   //   b. Resize windows with alt + right button.
-	 //  XGrabButton(
-	 //       dpy,
-	 //       Button3,
-	 //       None,
-	 //       frame,
-	 //       False,
-	 //       ButtonPressMask | ButtonReleaseMask | ButtonMotionMask,
-	 //       GrabModeAsync,
-	 //       GrabModeAsync,
-	 //       None,
-	 //       None);
+	 // TODO: map client window to frame with hashmap instead of list
+	 Client *client = (Client *)malloc(sizeof *client);
+	 client->client = win;
+	 client->frame = frame;
+	 client->close_button = close_button;
+	
+ 	 ylist_add_tail(clients, client);
+ 	 printf("Client {\n   client = %lu,\n   frame = %lu,\n   close_button = %lu\n}\n", client->client, client->frame, client->close_button);
+	 fflush(stdout);
+	 
+	 XMapWindow(dpy, frame);
+}
+
+void unframe(Window w) 
+{
+	 
 }
 
 int main()
@@ -128,7 +130,16 @@ int main()
     setup_display();
     setup_wm_hints();
 
-	// clients = ylist_new();
+    XGCValues gcv;
+    gcv.function = GXcopy;
+
+    gcv.foreground = create_color(STRIP_LIGHT).pixel;
+    strip_light_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
+ 
+    gcv.foreground = create_color(STRIP_DARK).pixel;
+    strip_dark_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
+
+	clients = ylist_new();
     // Window menu_win = create_menu();
     // XWindowAttributes menu_attr;
 
@@ -175,4 +186,6 @@ int main()
 				printf("Ignoring event\n");
 		}
   }
+  
+  ylist_destroy(clients);
 }
