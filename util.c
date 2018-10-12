@@ -1,6 +1,5 @@
 #include "util.h"
 
-
 static int send_xmessage(Window win, Atom atom, long x)
 {
 	XClientMessageEvent ev;
@@ -58,8 +57,12 @@ void send_wm_delete(Window window)
   }
 
   if (has_delete_atom) {
+	  printf("Killing kindly\n");
+	  fflush(stdout);
       send_xmessage(window, atom_wm[AtomWMProtocols], atom_wm[AtomWMDeleteWindow]);
   } else {
+	  printf("Force killing\n");
+	  fflush(stdout);
       XKillClient(dpy, window);
   }
 }
@@ -107,4 +110,38 @@ Client* find_client(Window win)
 		curr = curr->next;
 	}
 	return NULL;
+}
+
+void remove_client(Display* dpy, Client* client) {
+	XGrabServer(dpy);
+	printf("In remove_client()\n");
+	print_client(client);
+	if (client->client != 0) {
+		XReparentWindow(dpy, client->client, root, 0, 0);
+		XRemoveFromSaveSet(dpy, client->client);
+	}
+	
+	if (client->close_button != 0) {
+		XDestroyWindow(dpy, client->close_button);
+	}
+	
+	if (client->frame != 0) {
+		XDestroyWindow(dpy, client->frame);
+	}
+	
+	//TODO: properly remove from list
+	client->client = 0;
+	client->frame = 0;
+	client->close_button = 0;
+	if (client->title != NULL) {
+		free(client->title);
+	}
+	free(client);
+	XUngrabServer(dpy);
+}
+
+void print_client(Client* c)
+{
+	printf("Client {\n\tframe = %lu,\n\tclient = %lu,\n\tclose_button = %lu\n}\n", c->frame, c->client, c->close_button);	
+	fflush(stdout);
 }

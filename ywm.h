@@ -2,15 +2,17 @@
 #define YWM_H
 #include <stdlib.h>
 #include "ylist.h"
+#include "client.h"
+#include "menu.h"
 
-#define DEF_FONT "-b&h-lucida-medium-r-*-*-11-*-*-*-*-*-*-*"
+#define DEF_FONT "-b&h-lucida-bold-r-*-*-11-*-*-*-*-*-*-*"
 
 XFontStruct *title_font;
 GC text_gc;
 
 Display *dpy;
 Window root;
-Window close_button;
+Window root_menu;
 
 enum AtomsWM {
   AtomWMDeleteWindow,
@@ -20,22 +22,6 @@ enum AtomsWM {
 
 Atom atom_wm[NumberOfAtoms];
 
-typedef struct {
-	int x, y;
-} Point;
-
-typedef struct {
-	int x, y;
-	int width, height;
-} Rect;
-
-typedef struct {
-	char *title;
-	Window close_button;
-	Window client;
-	Window frame;
-} Client;
-
 Point cursor_start_point;
 Rect window_start;
 
@@ -43,5 +29,6 @@ Rect window_start;
 YList* clients;
 
 void frame(Display *dpy, Window root, Window win);
+void unframe(Display *dpy, Window win);
 void redraw(Display *dpy, Client *client);
 #endif
