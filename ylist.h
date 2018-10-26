@@ -1,26 +1,38 @@
-#ifndef YLIST_H
-#define YLIST_H
+#ifndef DLIST_H
+#define DLIST_H
+
+#include <stdlib.h>
 
 typedef struct YNode {
   void *data;
   struct YNode *prev;
   struct YNode *next;
+
 } YNode;
 
 typedef struct YList {
-  unsigned int length;
+  unsigned int size;
+
+  int (*match)(const void *key1, const void *key2);
+  void (*destroy)(void *data);
+
   struct YNode *head;
   struct YNode *tail;
 } YList;
 
-typedef void (*YDestroyFunc)(void *);
-
-YList *ylist_new();
-void ylist_add_head(YList *list, void *data);
-void ylist_add_tail(YList *list, void *data);
-YNode *ylist_remove_head(YList *list);
-YNode *ylist_remove_tail(YList *list);
+void ylist_init(YList *list, void (*destroy)(void *data));
 void ylist_destroy(YList *list);
-void ylist_destroy_deep(YList *list, YDestroyFunc destroy_func);
+int ylist_ins_next(YList *list, YNode *node, const void *data);
+int ylist_ins_prev(YList *list, YNode *node, const void *data);
+int ylist_remove(YList *list, YNode *node, void **data);
+
+#define ylist_size(list) ((list)->size)
+#define ylist_head(list) ((list)->head)
+#define ylist_tail(list) ((list)->tail)
+#define ylist_is_head(node) ((node)->prev == NULL ? 1 : 0)
+#define ylist_is_tail(node) ((node)->next == NULL ? 1 : 0)
+#define ylist_data(node) ((node)->data)
+#define ylist_next(node) ((node)->next)
+#define ylist_prev(node) ((node)->prev)
 
 #endif

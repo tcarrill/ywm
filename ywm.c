@@ -8,14 +8,16 @@
 
 #define FRAME_TITLEBAR_HEIGHT 20
 #define FRAME_BORDER_WIDTH 4
-#define FRAME_COLOR "#aaaaaa"
+#define FOCUSED_FRAME_COLOR "#aaaaaa"
+#define UNFOCUSED_FRAME_COLOR "#dadada"
 #define LIGHT_GREY "#cacaca"
 #define DARK_GREY "#6a6a6a"
 #define RED "#fc5b57"
 
 GC light_grey_gc;
 GC dark_grey_gc;
-GC frame_gc;
+GC focused_frame_gc;
+GC unfocused_frame_gc;
 	
 static void setup_wm_hints() 
 {
@@ -54,34 +56,49 @@ static void setup_display()
 }
 
 void draw_window_titlebar(Display* dpy, Client *client, Rect initial_window) 
-{ 
-	int title_len = strlen(client->title);
-    int title_width = XTextWidth(title_font, client->title, title_len); 	
-    int titlex = (initial_window.width / 2) - (title_width / 2);
-	
+{ 	
     int yoffset = 4;
 	int left_xstart_light = 20;
-	int left_xend_light = titlex - 10;
-	int right_xstart_light = titlex + title_width + 7;
-	int right_xend_light = initial_window.width - 5;
-	
 	int left_xstart_dark = left_xstart_light + 1;
-	int left_xend_dark = left_xend_light + 1;
-	int right_xstart_dark = right_xstart_light + 1;
-	int right_xend_dark = right_xend_light + 1;
 	
-    for (int i = 0; i < 12; i++) {
-		int y = yoffset + i;
-    	if (i % 2 == 0) {
-   			XDrawLine(dpy, client->frame, light_grey_gc, left_xstart_light, y, left_xend_light, y);
-  			XDrawLine(dpy, client->frame, light_grey_gc, right_xstart_light, y, right_xend_light, y);
-   		} else {
-   			XDrawLine(dpy, client->frame, dark_grey_gc, left_xstart_dark, y, left_xend_dark, y);
- 	 		XDrawLine(dpy, client->frame, dark_grey_gc, right_xstart_dark, y, right_xend_dark, y);
-		}
-     }	
+	if (client->title != NULL) {
+		int title_len = strlen(client->title);
+	    int title_width = XTextWidth(title_font, client->title, title_len); 	
+	    int titlex = (initial_window.width / 2) - (title_width / 2);
+		
+		int left_xend_light = titlex - 10;
+		int right_xstart_light = titlex + title_width + 7;
+		int right_xend_light = initial_window.width - 5;
+		
+		int left_xend_dark = left_xend_light + 1;
+		int right_xstart_dark = right_xstart_light + 1;
+		int right_xend_dark = right_xend_light + 1;
+		
+	    for (int i = 0; i < 12; i++) {
+			int y = yoffset + i;
+	    	if (i % 2 == 0) {
+	   			XDrawLine(dpy, client->frame, light_grey_gc, left_xstart_light, y, left_xend_light, y);
+	  			XDrawLine(dpy, client->frame, light_grey_gc, right_xstart_light, y, right_xend_light, y);
+	   		} else {
+	   			XDrawLine(dpy, client->frame, dark_grey_gc, left_xstart_dark, y, left_xend_dark, y);
+	 	 		XDrawLine(dpy, client->frame, dark_grey_gc, right_xstart_dark, y, right_xend_dark, y);
+			}
+	     }	
 	 
-	 XDrawString(dpy, client->frame, text_gc, titlex, 14, client->title, title_len);
+		 XDrawString(dpy, client->frame, text_gc, titlex, 14, client->title, title_len);
+	} else {
+		int xend_light = initial_window.width - 5;
+		int xend_dark = xend_light + 1;
+		
+	    for (int i = 0; i < 12; i++) {
+			int y = yoffset + i;
+	    	if (i % 2 == 0) {
+	   			XDrawLine(dpy, client->frame, light_grey_gc, left_xstart_light, y, xend_light, y);
+	   		} else {
+	   			XDrawLine(dpy, client->frame, dark_grey_gc, left_xstart_dark, y, xend_dark, y);
+			}
+	     }	
+	}
 }
 
 void redraw(Display* dpy, Client *client) 
@@ -183,8 +200,9 @@ void frame(Display* dpy, Window root, Window win)
 	 client->close_button = close_button;
 	 XFetchName(dpy, win, &client->title);
 	 print_client(client);
- 	 ylist_add_tail(clients, client);
-	 
+	 ylist_ins_prev(&clients, ylist_head(&clients), client);
+	 printf("Managed clients: %d\n", ylist_size(&clients));
+	 fflush(stdout);
 	 XMapWindow(dpy, frame);
  	 XMapWindow(dpy, close_button);
 }
@@ -223,10 +241,10 @@ int main()
     gcv.foreground = create_color(DARK_GREY).pixel;
     dark_grey_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
 
-    gcv.foreground = create_color(FRAME_COLOR).pixel;
-    frame_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
+    gcv.foreground = create_color(FOCUSED_FRAME_COLOR).pixel;
+    focused_frame_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
 
-	clients = ylist_new();
+	ylist_init(&clients, free);
     root_menu = create_menu();
 
     XSelectInput(dpy, root, SubstructureRedirectMask | SubstructureNotifyMask | ButtonPressMask | ButtonReleaseMask);
@@ -279,5 +297,5 @@ int main()
 		}
   }
   
-  ylist_destroy(clients);
+  ylist_destroy(&clients);
 }

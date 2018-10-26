@@ -23,6 +23,8 @@ void on_button_press(Display* dpy, const XButtonEvent *ev)
 			} else {
 					XUnmapWindow(dpy, root_menu);
 			}
+		} else {
+			XUnmapWindow(dpy, root_menu);
 		}
 	} else if (menu_attr.map_state != IsUnmapped && ev->button == Button1) {
 		for (int i = 0; i < MENU_SIZE; i++) {

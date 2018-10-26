@@ -19,6 +19,7 @@ void remove_client(Display* dpy, Client* c);
 void fork_exec(char *cmd);
 void send_wm_delete(Window window);
 XColor create_color(char* hex);
+XColor create_color_shade(char* hex, float shade);
 void print_client(Client* c);
 
 #endif

@@ -26,7 +26,7 @@ Point cursor_start_point;
 Rect window_start;
 
 // TODO: Add client to frame hashmap instead of list
-YList* clients;
+YList clients;
 
 void frame(Display *dpy, Window root, Window win);
 void unframe(Display *dpy, Window win);

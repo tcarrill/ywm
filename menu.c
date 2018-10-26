@@ -4,7 +4,7 @@
 #define MENU_BORDER_DARK "#555555"
 #define MENU_BORDER_LIGHT "#EFEFEF"
 #define MENU_BORDER_LIGHT2 "#ACACAC"
-#define FLASH_COLOR "#FFFFFF"
+#define FLASH_COLOR "#ccc8d1"
 GC bg_gc;
 GC flash_gc;
 
@@ -27,7 +27,7 @@ Window create_menu()
 
   Window menu_win = XCreateSimpleWindow(dpy,
 					DefaultRootWindow(dpy),
-					0, 0, MENU_MAX_WIDTH, MENU_ITEM_HEIGHT * MENU_SIZE, 0,
+					0, 0, MENU_MAX_WIDTH, MENU_ITEM_HEIGHT * MENU_SIZE + 20, 0,
 					BlackPixel(dpy, 0),
 					bg.pixel);
 
@@ -35,7 +35,7 @@ Window create_menu()
   {
       Window menu_item = XCreateSimpleWindow(dpy,
         menu_win,
-        0, MENU_ITEM_HEIGHT * i, MENU_MAX_WIDTH, MENU_ITEM_HEIGHT, 0,
+        0, MENU_ITEM_HEIGHT * i + 20, MENU_MAX_WIDTH, MENU_ITEM_HEIGHT, 0,
         BlackPixel(dpy, 0),
         bg.pixel);
       XSelectInput(dpy, menu_item, ButtonPressMask | ButtonReleaseMask | ExposureMask);
@@ -83,7 +83,7 @@ void flash_menu(int menu_item) {
       }
 
       XSync(dpy, True);
-      usleep(62500);
+      usleep(22500);
     }
 }
 

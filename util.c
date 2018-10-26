@@ -78,7 +78,7 @@ XColor create_color(char *hex)
 
 Client* find_client_by_type(Window win, int type) 
 {
-	YNode* curr = clients->head;
+	YNode* curr = ylist_head(&clients);
 	Client* client = NULL;
 	while (curr != NULL) {
 		client = (Client *)curr->data;		
@@ -98,7 +98,7 @@ Client* find_client_by_type(Window win, int type)
 
 Client* find_client(Window win) 
 {
-	YNode* curr = clients->head;
+	YNode* curr = ylist_head(&clients);
 	Client* client = NULL;
 	while (curr != NULL) {
 		client = (Client *)curr->data;		
@@ -129,14 +129,27 @@ void remove_client(Display* dpy, Client* client) {
 		XDestroyWindow(dpy, client->frame);
 	}
 	
-	//TODO: properly remove from list
-	client->client = 0;
-	client->frame = 0;
-	client->close_button = 0;
-	if (client->title != NULL) {
-		free(client->title);
+	YNode* curr = ylist_head(&clients);
+	while (curr != NULL) {
+		Client *tmp = (Client *)curr->data;		
+		
+		if (tmp == client) {
+			break;
+		}
+		
+		curr = curr->next;
 	}
-	free(client);
+
+	if (client->title != NULL) {
+		XFree(client->title);
+	}
+	
+	if (ylist_remove(&clients, curr, (void **)&client) != 0) {
+		printf("Breakage\n");
+	}
+	
+	printf("Managed clients: %d\n", ylist_size(&clients));
+	fflush(stdout);
 	XUngrabServer(dpy);
 }
 
