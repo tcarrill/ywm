@@ -3,7 +3,7 @@
 	
 void on_key_press(Display* dpy, const XKeyEvent *ev) 
 {
-	printf("\ton_key_press()\n");
+	// printf("\ton_key_press()\n");
 	if (ev->subwindow != None) {
 		XRaiseWindow(dpy, ev->subwindow);
 	}
@@ -11,7 +11,7 @@ void on_key_press(Display* dpy, const XKeyEvent *ev)
 
 void on_button_press(Display* dpy, const XButtonEvent *ev)
 {
-	printf("\ton_button_press()\n");
+	// printf("\ton_button_press()\n");
 	XWindowAttributes menu_attr;
 	XGetWindowAttributes(dpy, root_menu, &menu_attr);
 	if (ev->window == root  && ev->subwindow == None) {
@@ -64,12 +64,20 @@ void on_button_press(Display* dpy, const XButtonEvent *ev)
 					CurrentTime);
 
 		XRaiseWindow(dpy, ev->window);
+		focused_client = find_client(ev->window);
+		
+		YNode *curr = ylist_head(&clients);
+		while (curr != NULL) {
+			Client *client = (Client *)ylist_data(curr);
+			redraw(dpy, client);
+			curr = curr->next;
+		}
 	}
 }
 
 void on_button_release(Display* dpy, const XButtonEvent *ev)
 {
-	printf("\ton_button_release()\n");
+	// printf("\ton_button_release()\n");
 	
 	Client *c = find_client_by_type(ev->window, CLOSE_BTN);
 	if (c != NULL) {
@@ -120,17 +128,17 @@ void on_expose(Display* dpy, const XExposeEvent *ev)
 
 void on_reparent_notify(Display* dpy, const XReparentEvent *ev)
 {
-	printf("\ton_reparent_notify()\n");
+	// printf("\ton_reparent_notify()\n");
 }
 
 void on_create_notify(Display* dpy, const XCreateWindowEvent *ev)
 {
-	printf("\ton_create_notify()\n");
+	// printf("\ton_create_notify()\n");
 }
 
 void on_destroy_notify(Display* dpy, const XDestroyWindowEvent *ev)
 {
-	printf("\ton_destroy_notify()\n");
+	// printf("\ton_destroy_notify()\n");
 	Client *c = find_client(ev->window);
 	if (c != NULL) {
 		remove_client(dpy, c);
@@ -141,7 +149,7 @@ void on_destroy_notify(Display* dpy, const XDestroyWindowEvent *ev)
 
 void on_configure_request(Display* dpy, const XConfigureRequestEvent *ev)
 {
-	printf("\ton_configure_request()\n");
+	// printf("\ton_configure_request()\n");
 	XWindowChanges changes;
 	changes.x = ev->x;
 	changes.y = ev->y;
@@ -156,7 +164,7 @@ void on_configure_request(Display* dpy, const XConfigureRequestEvent *ev)
 
 void on_configure_notify(Display* dpy, const XConfigureEvent* ev)
 {
-	printf("\ton_configure_notify()\n");
+	// printf("\ton_configure_notify()\n");
 }
 
 void on_map_request(Display* dpy, Window root, const XMapRequestEvent* ev)
@@ -171,7 +179,7 @@ void on_map_request(Display* dpy, Window root, const XMapRequestEvent* ev)
 
 void on_unmap_notify(Display* dpy, const XUnmapEvent* ev) 
 {
-	printf("\ton_unmap_notify()\n");
+	// printf("\ton_unmap_notify()\n");
 	
 	if (ev->event == root) {
 		printf("\tIgnoring unmap!\n");
@@ -188,4 +196,17 @@ void on_unmap_notify(Display* dpy, const XUnmapEvent* ev)
 	
 	// remove_client(dpy, c);
 	// unframe(dpy, ev->window);
+}
+
+void on_enter_notify(Display* dpy, const XCrossingEvent* ev)
+{
+	// printf("\ton_enter_notify()\n");
+	focused_client = find_client(ev->window);
+	
+	YNode *curr = ylist_head(&clients);
+	while (curr != NULL) {
+		Client *client = (Client *)ylist_data(curr);
+		redraw(dpy, client);
+		curr = curr->next;
+	}
 }

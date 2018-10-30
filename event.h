@@ -20,4 +20,5 @@ void on_configure_request(Display* dpy, const XConfigureRequestEvent* ev);
 void on_configure_notify(Display* dpy, const XConfigureEvent* ev);
 void on_map_request(Display* dpy, Window root, const XMapRequestEvent* ev);
 void on_unmap_notify(Display* dpy, const XUnmapEvent* ev);
+void on_enter_notify(Display* dpy, const XCrossingEvent* ev);
 #endif

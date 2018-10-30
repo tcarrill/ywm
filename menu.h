@@ -8,9 +8,9 @@
 
 #define MENU_MAX_WIDTH  175
 #define MENU_ITEM_HEIGHT 22
-#define MENU_SIZE  6
+#define MENU_SIZE  7
 
-GC menu_border_dark_gc, menu_border_light_gc, menu_border_light2_gc;
+GC menu_border_dark_gc, menu_border_light_gc, menu_border_light2_gc, menu_title_gc, menu_light_strip_gc, menu_dark_strip_gc;
 
 enum menu_item_type
 {
@@ -27,6 +27,7 @@ struct menu_item {
 // todo: menu_items should be a linked list
 static struct menu_item menu_items[] =
 {
+	  { .label = "Menu", .command = "", .type = Command },
       { .label = "Xterm", .command = "xterm", .type = Command },
       { .label = "Xcalc", .command = "xcalc", .type = Command },
       { .label = "Xclock", .command = "xclock", .type = Command },

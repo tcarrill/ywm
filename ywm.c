@@ -5,19 +5,6 @@
 #include "util.h"
 #include "ywm.h"
 #include "event.h"
-
-#define FRAME_TITLEBAR_HEIGHT 20
-#define FRAME_BORDER_WIDTH 4
-#define FOCUSED_FRAME_COLOR "#aaaaaa"
-#define UNFOCUSED_FRAME_COLOR "#dadada"
-#define LIGHT_GREY "#cacaca"
-#define DARK_GREY "#6a6a6a"
-#define RED "#fc5b57"
-
-GC light_grey_gc;
-GC dark_grey_gc;
-GC focused_frame_gc;
-GC unfocused_frame_gc;
 	
 static void setup_wm_hints() 
 {
@@ -60,32 +47,42 @@ void draw_window_titlebar(Display* dpy, Client *client, Rect initial_window)
     int yoffset = 4;
 	int left_xstart_light = 20;
 	int left_xstart_dark = left_xstart_light + 1;
+	GC light_gc, dark_gc;
+	
+	if (client == focused_client) {
+  	    light_gc = focused_light_grey_gc;
+  	    dark_gc = focused_dark_grey_gc;
+	} else {
+		light_gc = unfocused_light_grey_gc;
+		dark_gc = unfocused_dark_grey_gc;
+	}
 	
 	if (client->title != NULL) {
 		int title_len = strlen(client->title);
 	    int title_width = XTextWidth(title_font, client->title, title_len); 	
 	    int titlex = (initial_window.width / 2) - (title_width / 2);
+	    XDrawString(dpy, client->frame, text_gc, titlex, 14, client->title, title_len);
+			
+		if (client == focused_client) {
+			int left_xend_light = titlex - 10;
+			int right_xstart_light = titlex + title_width + 7;
+			int right_xend_light = initial_window.width - 5;
 		
-		int left_xend_light = titlex - 10;
-		int right_xstart_light = titlex + title_width + 7;
-		int right_xend_light = initial_window.width - 5;
-		
-		int left_xend_dark = left_xend_light + 1;
-		int right_xstart_dark = right_xstart_light + 1;
-		int right_xend_dark = right_xend_light + 1;
-		
-	    for (int i = 0; i < 12; i++) {
-			int y = yoffset + i;
-	    	if (i % 2 == 0) {
-	   			XDrawLine(dpy, client->frame, light_grey_gc, left_xstart_light, y, left_xend_light, y);
-	  			XDrawLine(dpy, client->frame, light_grey_gc, right_xstart_light, y, right_xend_light, y);
-	   		} else {
-	   			XDrawLine(dpy, client->frame, dark_grey_gc, left_xstart_dark, y, left_xend_dark, y);
-	 	 		XDrawLine(dpy, client->frame, dark_grey_gc, right_xstart_dark, y, right_xend_dark, y);
-			}
-	     }	
-	 
-		 XDrawString(dpy, client->frame, text_gc, titlex, 14, client->title, title_len);
+			int left_xend_dark = left_xend_light + 1;
+			int right_xstart_dark = right_xstart_light + 1;
+			int right_xend_dark = right_xend_light + 1;
+	  	    
+		    for (int i = 0; i < 12; i++) {
+				int y = yoffset + i;
+		    	if (i % 2 == 0) {
+		   			XDrawLine(dpy, client->frame, light_gc, left_xstart_light, y, left_xend_light, y);
+		  			XDrawLine(dpy, client->frame, light_gc, right_xstart_light, y, right_xend_light, y);
+		   		} else {
+		   			XDrawLine(dpy, client->frame, dark_gc, left_xstart_dark, y, left_xend_dark, y);
+		 	 		XDrawLine(dpy, client->frame, dark_gc, right_xstart_dark, y, right_xend_dark, y);
+				}
+		     }	
+		}   
 	} else {
 		int xend_light = initial_window.width - 5;
 		int xend_dark = xend_light + 1;
@@ -93,9 +90,9 @@ void draw_window_titlebar(Display* dpy, Client *client, Rect initial_window)
 	    for (int i = 0; i < 12; i++) {
 			int y = yoffset + i;
 	    	if (i % 2 == 0) {
-	   			XDrawLine(dpy, client->frame, light_grey_gc, left_xstart_light, y, xend_light, y);
+	   			XDrawLine(dpy, client->frame, light_gc, left_xstart_light, y, xend_light, y);
 	   		} else {
-	   			XDrawLine(dpy, client->frame, dark_grey_gc, left_xstart_dark, y, xend_dark, y);
+	   			XDrawLine(dpy, client->frame, dark_gc, left_xstart_dark, y, xend_dark, y);
 			}
 	     }	
 	}
@@ -114,26 +111,38 @@ void redraw(Display* dpy, Client *client)
         &width, &height,
         &border_width,
         &depth);
+	
+		GC dark_gc, light_gc;
+  if (client == focused_client) {
+	  XSetWindowBackground(dpy, client->frame, create_color(FOCUSED_FRAME_COLOR).pixel);
+	  light_gc = focused_light_grey_gc;
+	  dark_gc = focused_dark_grey_gc;
+  } else {
+  	  XSetWindowBackground(dpy, client->frame, create_color(UNFOCUSED_FRAME_COLOR).pixel);
+	  light_gc = unfocused_light_grey_gc;
+	  dark_gc = unfocused_dark_grey_gc;
+  }
+  XClearWindow(dpy, client->frame);
   
   // light border
   // top
-  XDrawLine(dpy, client->frame, light_grey_gc, 0, 0, width, 0);
+  XDrawLine(dpy, client->frame, light_gc, 0, 0, width, 0);
   // left
-  XDrawLine(dpy, client->frame, light_grey_gc, 0, 1, 0, height - 1);
+  XDrawLine(dpy, client->frame, light_gc, 0, 1, 0, height - 1);
   // right
-  XDrawLine(dpy, client->frame, light_grey_gc, width - FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT, width - FRAME_BORDER_WIDTH, height - FRAME_BORDER_WIDTH);
+  XDrawLine(dpy, client->frame, light_gc, width - FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT, width - FRAME_BORDER_WIDTH, height - FRAME_BORDER_WIDTH);
   // bottom
-  XDrawLine(dpy, client->frame, light_grey_gc, FRAME_BORDER_WIDTH, height - FRAME_BORDER_WIDTH, width - FRAME_BORDER_WIDTH, height - FRAME_BORDER_WIDTH);  
+  XDrawLine(dpy, client->frame, light_gc, FRAME_BORDER_WIDTH, height - FRAME_BORDER_WIDTH, width - FRAME_BORDER_WIDTH, height - FRAME_BORDER_WIDTH);  
     
   // dark border
   // top
-  XDrawLine(dpy, client->frame, dark_grey_gc, FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT - 1, width - FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT - 1); 
+  XDrawLine(dpy, client->frame, dark_gc, FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT - 1, width - FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT - 1); 
   // left
-  XDrawLine(dpy, client->frame, dark_grey_gc, 3, FRAME_TITLEBAR_HEIGHT - 1, 3, height - FRAME_BORDER_WIDTH);
+  XDrawLine(dpy, client->frame, dark_gc, 3, FRAME_TITLEBAR_HEIGHT - 1, 3, height - FRAME_BORDER_WIDTH);
   // right
-  XDrawLine(dpy, client->frame, dark_grey_gc, width - 1, 1, width - 1, height); 
+  XDrawLine(dpy, client->frame, dark_gc, width - 1, 1, width - 1, height); 
   // bottom
-  XDrawLine(dpy, client->frame, dark_grey_gc, 1, height - 1, width, height - 1);
+  XDrawLine(dpy, client->frame, dark_gc, 1, height - 1, width, height - 1);
   
   Rect initial_window = { .x = x, .y = y, .width = width, .height = height};
   draw_window_titlebar(dpy, client, initial_window);
@@ -183,7 +192,7 @@ void frame(Display* dpy, Window root, Window win)
 	XSelectInput(
          dpy,
          frame,
-         SubstructureRedirectMask | SubstructureNotifyMask | ButtonPressMask | ButtonReleaseMask | ExposureMask);
+         SubstructureRedirectMask | SubstructureNotifyMask | ButtonPressMask | ButtonReleaseMask | ExposureMask | EnterWindowMask);
 		 
 	XAddToSaveSet(dpy, win);
 
@@ -218,8 +227,8 @@ void unframe(Display* dpy, Window win)
 	XReparentWindow(dpy, client->client, root, 0, 0);
 	XRemoveFromSaveSet(dpy, client->client);
 	
-	// XUnmapWindow(dpy, client->close_button);
- 	// XUnmapWindow(dpy, client->frame);
+	XUnmapWindow(dpy, client->close_button);
+ 	XUnmapWindow(dpy, client->frame);
 
 	// XDestroyWindow(dpy, client->close_button);
 	// XDestroyWindow(dpy, client->frame);
@@ -235,17 +244,24 @@ int main()
     XGCValues gcv;
     gcv.function = GXcopy;
 
-    gcv.foreground = create_color(LIGHT_GREY).pixel;
-    light_grey_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
+    gcv.foreground = create_color(FOCUSED_LIGHT_GREY).pixel;
+    focused_light_grey_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
  
-    gcv.foreground = create_color(DARK_GREY).pixel;
-    dark_grey_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
+    gcv.foreground = create_color(FOCUSED_DARK_GREY).pixel;
+    focused_dark_grey_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
+	
+    gcv.foreground = create_color(UNFOCUSED_LIGHT_GREY).pixel;
+    unfocused_light_grey_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
+ 
+    gcv.foreground = create_color(UNFOCUSED_DARK_GREY).pixel;
+    unfocused_dark_grey_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
 
     gcv.foreground = create_color(FOCUSED_FRAME_COLOR).pixel;
     focused_frame_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
 
 	ylist_init(&clients, free);
-    root_menu = create_menu();
+    ylist_init(&focus_stack, free);
+	root_menu = create_menu();
 
     XSelectInput(dpy, root, SubstructureRedirectMask | SubstructureNotifyMask | ButtonPressMask | ButtonReleaseMask);
 
@@ -292,10 +308,14 @@ int main()
 			case UnmapNotify:
 				on_unmap_notify(dpy, &ev.xunmap);
 				break;
+			case EnterNotify:
+				on_enter_notify(dpy, &ev.xcrossing);
+				break;
 			default:
 				printf("\tIgnoring event\n");
 		}
   }
   
   ylist_destroy(&clients);
+  ylist_destroy(&focus_stack);
 }
