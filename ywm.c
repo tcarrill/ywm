@@ -6,6 +6,7 @@
 #include "ywm.h"
 #include "event.h"
 	
+GC light_red_gc, dark_red_gc, black_gc;
 static void setup_wm_hints() 
 {
   atom_wm[AtomWMProtocols] = XInternAtom(dpy, "WM_PROTOCOLS", False);
@@ -20,11 +21,26 @@ static void setup_display()
   }
 
   root = DefaultRootWindow(dpy);
-  printf("Root window: %lu\n", root);
+  Screen* screen = XScreenOfDisplay(dpy, XDefaultScreen(dpy));
+  screen_w = XWidthOfScreen(screen);
+  screen_h = XHeightOfScreen(screen);
+  printf("Root window: %lu\n%dx%d", root, screen_w, screen_h);
   fflush(stdout);
   
   XColor backgroundColor = create_color("#666797");
   XSetWindowBackground(dpy, root, backgroundColor.pixel);
+  // xft_detail.color.red = 65535;
+  // xft_detail.color.green = 65535;
+  // xft_detail.color.blue = 65535;
+  // xft_detail.color.alpha = 65535;
+  // xft_detail.pixel = 65535;
+
+  // xftfont = XftFontOpenName(dpy, DefaultScreen(dpy), "Arial-11");
+  // if (xftfont == NULL)
+  // {
+  // 	 printf("font '%s' not found", DEF_FONT);
+  // 	 exit(1);
+  // }
 
   title_font = XLoadQueryFont(dpy, DEF_FONT);
   if (title_font == NULL) {
@@ -32,20 +48,74 @@ static void setup_display()
   		exit(1);
   }
   
-  XGCValues gv;
-  gv.function = GXcopy;
-  gv.font = title_font->fid;
-  gv.foreground = 0x000000;
-  text_gc = XCreateGC(dpy, root, GCFunction|GCForeground|GCFont, &gv);
+  XGCValues gcv;
+  gcv.function = GXcopy;
+  gcv.font = title_font->fid;
+  gcv.foreground = 0x000000;
+  text_gc = XCreateGC(dpy, root, GCFunction | GCForeground | GCFont, &gcv);
+  
+  gcv.foreground = create_color(FOCUSED_LIGHT_GREY).pixel;
+  focused_light_grey_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
+
+  gcv.foreground = create_color(FOCUSED_DARK_GREY).pixel;
+  focused_dark_grey_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
+
+  gcv.foreground = create_color(UNFOCUSED_LIGHT_GREY).pixel;
+  unfocused_light_grey_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
+
+  gcv.foreground = create_color(UNFOCUSED_DARK_GREY).pixel;
+  unfocused_dark_grey_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
+
+  gcv.foreground = create_color(FOCUSED_FRAME_COLOR).pixel;
+  focused_frame_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
+
+  gcv.foreground = create_color(LIGHT_RED).pixel;
+  light_red_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
+
+  gcv.foreground = create_color(DARK_RED).pixel;
+  dark_red_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
+  
+  gcv.foreground = 0x632524;
+  black_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
 
   XClearWindow(dpy, root);
   XDefineCursor(dpy, root, XCreateFontCursor(dpy, XC_left_ptr));
 }
 
+void draw_close_button(Display* dpy, Client *client)
+{	
+	if (client == focused_client) {
+  		XSetWindowBackground(dpy, client->close_button, create_color(RED).pixel);
+	    XClearWindow(dpy, client->close_button);
+		
+		XDrawLine(dpy, client->close_button, light_red_gc, 2, 2, 10, 2);
+		XDrawLine(dpy, client->close_button, light_red_gc, 2, 2, 2, 10);
+		XDrawLine(dpy, client->close_button, dark_red_gc, 2, 10, 10, 10);
+		XDrawLine(dpy, client->close_button, dark_red_gc, 10, 2, 10, 10);
+	} else {
+  	  	XSetWindowBackground(dpy, client->close_button, create_color(UNFOCUSED_FRAME_COLOR).pixel);
+	    XClearWindow(dpy, client->close_button);
+		
+		XDrawLine(dpy, client->close_button, unfocused_light_grey_gc, 2, 2, 10, 2);
+		XDrawLine(dpy, client->close_button, unfocused_light_grey_gc, 2, 2, 2, 10);
+		XDrawLine(dpy, client->close_button, unfocused_dark_grey_gc, 2, 10, 10, 10);
+		XDrawLine(dpy, client->close_button, unfocused_dark_grey_gc, 10, 2, 10, 10);
+	}
+	XDrawLine(dpy, client->close_button, focused_dark_grey_gc, 0, 0, 12, 0);
+	XDrawLine(dpy, client->close_button, focused_dark_grey_gc, 0, 0, 0, 12);
+	XDrawLine(dpy, client->close_button, focused_light_grey_gc, 0, 12, 12, 12);
+	XDrawLine(dpy, client->close_button, focused_light_grey_gc, 12, 12, 12, 0);
+	
+	XDrawLine(dpy, client->close_button, black_gc, 1, 1, 11, 1);
+	XDrawLine(dpy, client->close_button, black_gc, 1, 1, 1, 11);
+	XDrawLine(dpy, client->close_button, black_gc, 1, 11, 11, 11);
+	XDrawLine(dpy, client->close_button, black_gc, 11, 11, 11, 1);
+}
+
 void draw_window_titlebar(Display* dpy, Client *client, Rect initial_window) 
 { 	
     int yoffset = 4;
-	int left_xstart_light = 20;
+	int left_xstart_light = 19;
 	int left_xstart_dark = left_xstart_light + 1;
 	GC light_gc, dark_gc;
 	
@@ -62,7 +132,8 @@ void draw_window_titlebar(Display* dpy, Client *client, Rect initial_window)
 	    int title_width = XTextWidth(title_font, client->title, title_len); 	
 	    int titlex = (initial_window.width / 2) - (title_width / 2);
 	    XDrawString(dpy, client->frame, text_gc, titlex, 14, client->title, title_len);
-			
+		// XftDrawString8(client->xftdraw, &xft_detail, xftfont, SPACE, SPACE + xftfont->ascent, (unsigned char *)client->title, strlen(client->title));
+		
 		if (client == focused_client) {
 			int left_xend_light = titlex - 10;
 			int right_xstart_light = titlex + title_width + 7;
@@ -146,6 +217,7 @@ void redraw(Display* dpy, Client *client)
   
   Rect initial_window = { .x = x, .y = y, .width = width, .height = height};
   draw_window_titlebar(dpy, client, initial_window);
+  draw_close_button(dpy, client);
 }
 
 Window create_close_button(Display* dpy, Window frame) 
@@ -155,18 +227,15 @@ Window create_close_button(Display* dpy, Window frame)
     Window close_button = XCreateSimpleWindow(
          dpy,
          frame,
-         x_window_attrs.x + 5,
+         x_window_attrs.x + 3,
          x_window_attrs.y + 4,
-         10,
-         10,
-         1,
+         13,
+         13,
+         0,
          0x000000,
          create_color(RED).pixel);
 				
-	XSelectInput(
-	         dpy,
-	         close_button,
-	         ButtonPressMask | ButtonReleaseMask);
+	XSelectInput(dpy, close_button, ButtonPressMask | ButtonReleaseMask);
 			   	
 	return close_button;
 }
@@ -202,11 +271,12 @@ void frame(Display* dpy, Window root, Window win)
          frame,
          4, 20);  // Offset of client window within frame.
 	 	
-	 // TODO: map client window to frame with hashmap instead of list
-	 Client *client = (Client *)malloc(sizeof *client);
+		 Client *client = (Client *)malloc(sizeof *client);
 	 client->client = win;
 	 client->frame = frame;
 	 client->close_button = close_button;
+ 	 // client->xftdraw = XftDrawCreate(dpy, (Drawable) client->frame, DefaultVisual(dpy, DefaultScreen(dpy)), DefaultColormap(dpy, DefaultScreen(dpy)));
+	 
 	 XFetchName(dpy, win, &client->title);
 	 print_client(client);
 	 ylist_ins_prev(&clients, ylist_head(&clients), client);
@@ -241,24 +311,6 @@ int main()
     setup_display();
     setup_wm_hints();
 
-    XGCValues gcv;
-    gcv.function = GXcopy;
-
-    gcv.foreground = create_color(FOCUSED_LIGHT_GREY).pixel;
-    focused_light_grey_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
- 
-    gcv.foreground = create_color(FOCUSED_DARK_GREY).pixel;
-    focused_dark_grey_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
-	
-    gcv.foreground = create_color(UNFOCUSED_LIGHT_GREY).pixel;
-    unfocused_light_grey_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
- 
-    gcv.foreground = create_color(UNFOCUSED_DARK_GREY).pixel;
-    unfocused_dark_grey_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
-
-    gcv.foreground = create_color(FOCUSED_FRAME_COLOR).pixel;
-    focused_frame_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
-
 	ylist_init(&clients, free);
     ylist_init(&focus_stack, free);
 	root_menu = create_menu();
@@ -267,7 +319,7 @@ int main()
 
     while (True) {
         XNextEvent(dpy, &ev);
-		printf("Received event: %d\n", ev.type);
+		// printf("Received event: %d\n", ev.type);
       	
 		switch(ev.type) {
 			case KeyPress:
@@ -311,11 +363,26 @@ int main()
 			case EnterNotify:
 				on_enter_notify(dpy, &ev.xcrossing);
 				break;
-			default:
-				printf("\tIgnoring event\n");
+			// default:
+				// printf("\tIgnoring event\n");
 		}
   }
   
   ylist_destroy(&clients);
   ylist_destroy(&focus_stack);
+}
+
+void quit() 
+{
+	free_menu();
+	// XFreeFont(title_font);
+	XFreeGC(dpy, focused_light_grey_gc);
+	XFreeGC(dpy, focused_dark_grey_gc);
+	XFreeGC(dpy, unfocused_light_grey_gc);
+	XFreeGC(dpy, unfocused_dark_grey_gc);
+	XFreeGC(dpy, focused_frame_gc);
+	XFreeGC(dpy, unfocused_frame_gc);
+	XFreeGC(dpy, light_red_gc);
+	XFreeGC(dpy, dark_red_gc);
+	XFreeGC(dpy, text_gc);
 }

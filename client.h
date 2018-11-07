@@ -1,6 +1,8 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
+#include <X11/Xft/Xft.h>
+
 typedef struct {
 	int x, y;
 } Point;
@@ -15,6 +17,7 @@ typedef struct {
 	Window close_button;
 	Window client;
 	Window frame;
+	XftDraw *xftdraw;
 } Client;
 
 #endif

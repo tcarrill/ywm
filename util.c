@@ -57,12 +57,8 @@ void send_wm_delete(Window window)
   }
 
   if (has_delete_atom) {
-	  printf("Killing kindly\n");
-	  fflush(stdout);
       send_xmessage(window, atom_wm[AtomWMProtocols], atom_wm[AtomWMDeleteWindow]);
   } else {
-	  printf("Force killing\n");
-	  fflush(stdout);
       XKillClient(dpy, window);
   }
 }
@@ -114,20 +110,18 @@ Client* find_client(Window win)
 
 void remove_client(Display* dpy, Client* client) {
 	XGrabServer(dpy);
-	printf("In remove_client()\n");
-	print_client(client);
-	if (client->client != 0) {
-		XReparentWindow(dpy, client->client, root, 0, 0);
-		XRemoveFromSaveSet(dpy, client->client);
-	}
 	
-	if (client->close_button != 0) {
-		XDestroyWindow(dpy, client->close_button);
-	}
+	XWindowAttributes attrs;
+	XGetWindowAttributes(dpy, client->client, &attrs);
 	
-	if (client->frame != 0) {
-		XDestroyWindow(dpy, client->frame);
-	}
+	printf("(%d, %d)\n", attrs.x, attrs.y);
+	fflush(stdout);
+	
+	// XReparentWindow(dpy, client->client, root, attrs.x, attrs.y);
+	XRemoveFromSaveSet(dpy, client->client);
+	
+	XDestroyWindow(dpy, client->close_button);
+	XDestroyWindow(dpy, client->frame);
 	
 	YNode* curr = ylist_head(&clients);
 	while (curr != NULL) {
@@ -148,8 +142,7 @@ void remove_client(Display* dpy, Client* client) {
 		printf("Breakage\n");
 	}
 	
-	printf("Managed clients: %d\n", ylist_size(&clients));
-	fflush(stdout);
+	XSync(dpy, False);
 	XUngrabServer(dpy);
 }
 

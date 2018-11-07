@@ -50,6 +50,7 @@ void on_button_press(Display* dpy, const XButtonEvent *ev)
 	        &border_width,
 	        &depth);
 			
+		cursor_snapped_point = (Point){ .x = 0, .y = 0};
 		cursor_start_point = (Point){ .x = ev->x_root, .y = ev->y_root };	
 	    window_start = (Rect){ .x = x, .y = y, .width = width, .height = height };
 		
@@ -75,6 +76,8 @@ void on_button_press(Display* dpy, const XButtonEvent *ev)
 	}
 }
 
+int threshold = 0;
+
 void on_button_release(Display* dpy, const XButtonEvent *ev)
 {
 	// printf("\ton_button_release()\n");
@@ -84,23 +87,40 @@ void on_button_release(Display* dpy, const XButtonEvent *ev)
 		send_wm_delete(c->client);	
 		remove_client(dpy, c);
 	}
-	
+	if (threshold > 0) {
+		threshold = 0;
+	}
 	XUngrabPointer(dpy, CurrentTime);
 }
 
 void on_motion_notify(Display* dpy, const XMotionEvent *ev)
 {
+	int snap_buffer = 25;
 	// printf("\ton_motion_notify()\n");
 	int xdiff = ev->x_root - cursor_start_point.x;
 	int ydiff = ev->y_root - cursor_start_point.y;
 	Client *c = find_client(ev->window);
 	
 	if (ev->state & Button1Mask && c->close_button != ev->window) {
-		XMoveWindow(
-		        dpy,
-		        ev->window,
-		        window_start.x + xdiff, 
-				window_start.y + ydiff);
+		int x = window_start.x + xdiff;
+		int y = window_start.y + ydiff;
+		
+		if (x + window_start.width + snap_buffer >= screen_w) { 
+			x = screen_w - window_start.width;
+		} else if (x - snap_buffer <= 0) {
+			cursor_snapped_point.x = x;
+			x = 0;
+		}
+				
+		if (y + window_start.height + snap_buffer >= screen_h) { 
+			cursor_snapped_point.y = y;
+			y = screen_h - window_start.height;
+		} else if (y - snap_buffer <= 0) {
+			cursor_snapped_point.y = y;
+			y = 0;
+		}
+			
+		XMoveWindow(dpy, ev->window, x, y);
 	} else if (ev->state & Button3Mask) {
 		XResizeWindow(dpy, c->frame, window_start.width + xdiff + 10, window_start.height + ydiff + 26);
 		XResizeWindow(dpy, c->client, MAX(1, window_start.width + xdiff), MAX(1, window_start.height + ydiff));
@@ -187,15 +207,9 @@ void on_unmap_notify(Display* dpy, const XUnmapEvent* ev)
 	}
 	
 	Client *c = find_client(ev->window);
-	if (c == NULL) {
-		printf("\tCould not find client containing window %lu\n", ev->window);
-		return;
+	if (c != NULL) {
+		remove_client(dpy, c);
 	}
-	printf("\tev->window: %lu\n", ev->window);
-	print_client(c);
-	
-	// remove_client(dpy, c);
-	// unframe(dpy, ev->window);
 }
 
 void on_enter_notify(Display* dpy, const XCrossingEvent* ev)
