@@ -21,5 +21,9 @@ void send_wm_delete(Window window);
 XColor create_color(char* hex);
 XColor create_color_shade(char* hex, float shade);
 void print_client(Client* c);
+int snap_window_right(int x);
+int snap_window_left(int x);
+int snap_window_top(int y);
+int snap_window_bottom(int y);
 
 #endif

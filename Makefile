@@ -1,13 +1,17 @@
 CC = gcc
-CFLAGS = -Wall -I.
-OBJ = ywm.o menu.o event.o util.o ylist.o
+LIBS = -L/usr/X11/lib -L/opt/X11/lib/pkgconfig/ -lX11 -lXext
+INCLUDES = -I/opt/X11/include/freetype2/ -arch x86_64 -I/opt/X11/include/
+CFLAGS = -Wall
+OBJS = ywm.o menu.o event.o util.o ylist.o
+BIN = ywm
 
+all: $(BIN)
+	
 %.o: %.c 
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) -c -o $@ $< $(CFLAGS) $(INCLUDES)
 
-ywm: ywm.o menu.o event.o util.o ylist.o
-	gcc -L/usr/X11/lib -lX11 -o ywm ywm.o menu.o event.o util.o ylist.o -I.
-
+$(BIN): $(OBJS)
+	$(CC) $(LIBS) -o $@ $(OBJS) $(INCLUDES)
+		
 clean:
-	rm -f *.o
-	rm ywm
+	rm -f $(BIN )$(OBJS)

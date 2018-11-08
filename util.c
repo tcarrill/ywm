@@ -146,6 +146,32 @@ void remove_client(Display* dpy, Client* client) {
 	XUngrabServer(dpy);
 }
 
+int snap_buffer = 20;
+int resistance_threshold = 50;
+int snap_window_right(int x)
+{
+	int x_distance = x + window_start.width + snap_buffer;
+	return x_distance >= screen_w && x_distance <= screen_w + resistance_threshold;	
+}
+
+int snap_window_left(int x)
+{
+	int x_distance = x - snap_buffer;
+	return x_distance <= 0 && x_distance >= -resistance_threshold;
+}
+
+int snap_window_top(int y)
+{
+	int y_distance = y - snap_buffer;
+	return y_distance <= 0 && y_distance >= -resistance_threshold;
+}
+
+int snap_window_bottom(int y)
+{
+	int y_distance = y + window_start.height + snap_buffer;
+	return y_distance >= screen_h && y_distance <= screen_h + resistance_threshold;
+}
+
 void print_client(Client* c)
 {
 	printf("Client {\n\tframe = %lu,\n\tclient = %lu,\n\tclose_button = %lu\n}\n", c->frame, c->client, c->close_button);	

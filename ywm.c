@@ -271,7 +271,7 @@ void frame(Display* dpy, Window root, Window win)
          frame,
          4, 20);  // Offset of client window within frame.
 	 	
-		 Client *client = (Client *)malloc(sizeof *client);
+	 Client *client = (Client *)malloc(sizeof *client);
 	 client->client = win;
 	 client->frame = frame;
 	 client->close_button = close_button;

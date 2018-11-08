@@ -50,10 +50,9 @@ void on_button_press(Display* dpy, const XButtonEvent *ev)
 	        &border_width,
 	        &depth);
 			
-		cursor_snapped_point = (Point){ .x = 0, .y = 0};
 		cursor_start_point = (Point){ .x = ev->x_root, .y = ev->y_root };	
 	    window_start = (Rect){ .x = x, .y = y, .width = width, .height = height };
-		
+
 		XGrabPointer(dpy, 
 					ev->window, 
 					True,
@@ -76,8 +75,6 @@ void on_button_press(Display* dpy, const XButtonEvent *ev)
 	}
 }
 
-int threshold = 0;
-
 void on_button_release(Display* dpy, const XButtonEvent *ev)
 {
 	// printf("\ton_button_release()\n");
@@ -87,15 +84,12 @@ void on_button_release(Display* dpy, const XButtonEvent *ev)
 		send_wm_delete(c->client);	
 		remove_client(dpy, c);
 	}
-	if (threshold > 0) {
-		threshold = 0;
-	}
+
 	XUngrabPointer(dpy, CurrentTime);
 }
 
 void on_motion_notify(Display* dpy, const XMotionEvent *ev)
 {
-	int snap_buffer = 25;
 	// printf("\ton_motion_notify()\n");
 	int xdiff = ev->x_root - cursor_start_point.x;
 	int ydiff = ev->y_root - cursor_start_point.y;
@@ -105,21 +99,18 @@ void on_motion_notify(Display* dpy, const XMotionEvent *ev)
 		int x = window_start.x + xdiff;
 		int y = window_start.y + ydiff;
 		
-		if (x + window_start.width + snap_buffer >= screen_w) { 
-			x = screen_w - window_start.width;
-		} else if (x - snap_buffer <= 0) {
-			cursor_snapped_point.x = x;
+		if (snap_window_right(x)) { 
+			x = screen_w - window_start.width;		
+		} else if (snap_window_left(x)) {	
 			x = 0;
-		}
-				
-		if (y + window_start.height + snap_buffer >= screen_h) { 
-			cursor_snapped_point.y = y;
+		} 
+		
+		if (snap_window_bottom(y)) { 
 			y = screen_h - window_start.height;
-		} else if (y - snap_buffer <= 0) {
-			cursor_snapped_point.y = y;
+		} else if (snap_window_top(y)) {
 			y = 0;
 		}
-			
+		
 		XMoveWindow(dpy, ev->window, x, y);
 	} else if (ev->state & Button3Mask) {
 		XResizeWindow(dpy, c->frame, window_start.width + xdiff + 10, window_start.height + ydiff + 26);
