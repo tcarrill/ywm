@@ -30,11 +30,11 @@ void on_button_press(Display* dpy, const XButtonEvent *ev)
 		YNode *curr = ylist_head(&menu_items);
 		while (curr != NULL) {
 		    MenuItem *menuItem = (MenuItem *)curr->data;
-			if (menuItem->window == ev->window) { 
-			     flash_menu(menuItem);      
-				 fork_exec(menuItem->command);
-			     XUnmapWindow(dpy, root_menu);
-			     break;
+			if (menuItem->window == ev->window) {
+		    	flash_menu(menuItem);      
+				fork_exec(menuItem->command);
+			    XUnmapWindow(dpy, root_menu);
+			    break;
 		    }
 			curr = curr->next;
 		}

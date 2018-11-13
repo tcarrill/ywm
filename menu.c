@@ -1,6 +1,6 @@
 #include "menu.h"
 
-#define TITLE_BAR_HEIGHT 20
+#define TITLE_BAR_HEIGHT 22
 
 #define MENU_TITLE_COLOR "#999aba"
 #define MENU_TITLE_LIGHT_STRIP "#bfbfcc"
@@ -168,13 +168,13 @@ static void draw_menu_item(MenuItem* menu_item, int flash) {
 }
 
 void draw_menu() {	
-	draw_menu_title();
 	YNode *curr = ylist_head(&menu_items);
 	while (curr != NULL) {
 		MenuItem *menuItem = (MenuItem *)curr->data;
     	draw_menu_item(menuItem, 0);
 		curr = curr->next;
   	}
+	draw_menu_title();
 }
 
 void flash_menu(MenuItem* menu_item) {
