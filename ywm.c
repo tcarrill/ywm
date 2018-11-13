@@ -96,10 +96,10 @@ void draw_close_button(Display* dpy, Client *client)
   	  	XSetWindowBackground(dpy, client->close_button, create_color(UNFOCUSED_FRAME_COLOR).pixel);
 	    XClearWindow(dpy, client->close_button);
 		
-		XDrawLine(dpy, client->close_button, unfocused_light_grey_gc, 2, 2, 10, 2);
-		XDrawLine(dpy, client->close_button, unfocused_light_grey_gc, 2, 2, 2, 10);
-		XDrawLine(dpy, client->close_button, unfocused_dark_grey_gc, 2, 10, 10, 10);
-		XDrawLine(dpy, client->close_button, unfocused_dark_grey_gc, 10, 2, 10, 10);
+		XDrawLine(dpy, client->close_button, unfocused_light_grey_gc, 1, 1, 11, 1);
+		XDrawLine(dpy, client->close_button, unfocused_light_grey_gc, 1, 1, 1, 11);
+		XDrawLine(dpy, client->close_button, unfocused_dark_grey_gc, 1, 11, 11, 11);
+		XDrawLine(dpy, client->close_button, unfocused_dark_grey_gc, 11, 1, 11, 11);
 	}
 	XDrawLine(dpy, client->close_button, focused_dark_grey_gc, 0, 0, 12, 0);
 	XDrawLine(dpy, client->close_button, focused_dark_grey_gc, 0, 0, 0, 12);

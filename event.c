@@ -27,13 +27,16 @@ void on_button_press(Display* dpy, const XButtonEvent *ev)
 			XUnmapWindow(dpy, root_menu);
 		}
 	} else if (menu_attr.map_state != IsUnmapped && ev->button == Button1) {
-		for (int i = 0; i < MENU_SIZE; i++) {
-			if (menu_item_wins[i] == ev->window) {
-                 flash_menu(i);
-				 fork_exec(menu_items[i].command);
+		YNode *curr = ylist_head(&menu_items);
+		while (curr != NULL) {
+		    MenuItem *menuItem = (MenuItem *)curr->data;
+			if (menuItem->window == ev->window) { 
+			     flash_menu(menuItem);      
+				 fork_exec(menuItem->command);
 			     XUnmapWindow(dpy, root_menu);
 			     break;
 		    }
+			curr = curr->next;
 		}
 	} else {
 	    XAllowEvents(dpy, ReplayPointer, CurrentTime);
@@ -191,12 +194,7 @@ void on_map_request(Display* dpy, Window root, const XMapRequestEvent* ev)
 void on_unmap_notify(Display* dpy, const XUnmapEvent* ev) 
 {
 	// printf("\ton_unmap_notify()\n");
-	
-	if (ev->event == root) {
-		printf("\tIgnoring unmap!\n");
-		return;
-	}
-	
+		
 	Client *c = find_client(ev->window);
 	if (c != NULL) {
 		remove_client(dpy, c);

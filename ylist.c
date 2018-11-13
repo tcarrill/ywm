@@ -12,7 +12,7 @@ void ylist_init(YList *list, void (*destroy)(void *data)) {
   return;
 }
 
-void dlist_destroy(YList *list) {
+void ylist_destroy(YList *list) {
   void *data;
 
   while (ylist_size(list) > 0) {
