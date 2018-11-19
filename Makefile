@@ -15,3 +15,6 @@ $(BIN): $(OBJS)
 		
 clean:
 	rm -f $(BIN )$(OBJS)
+	
+install:
+	mkdir -p ~/.ywm && cp -i ywm.menu ~/.ywm/ywm.menu && chmod 644 ~/.ywm/ywm.menu
