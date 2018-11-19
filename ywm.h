@@ -1,7 +1,7 @@
 #ifndef YWM_H
 #define YWM_H
 #include <stdlib.h>
-#include <X11/Xft/Xft.h>
+// #include <X11/Xft/Xft.h>
 #include "ylist.h"
 #include "client.h"
 #include "menu.h"
