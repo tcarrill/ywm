@@ -10,8 +10,6 @@
 #define MENU_MAX_WIDTH  175
 #define MENU_ITEM_HEIGHT 22
 
-GC menu_border_dark_gc, menu_border_light_gc, menu_border_light2_gc, menu_title_gc, menu_light_strip_gc, menu_dark_strip_gc;
-
 enum menu_item_type
 {
   Command,

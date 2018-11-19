@@ -6,13 +6,12 @@
 #define MENU_TITLE_LIGHT_STRIP "#bfbfcc"
 #define MENU_TITLE_DARK_STRIP "#5d5d68"
 #define MENU_BG_COLOR "#AAAAAA"
-#define MENU_BORDER_DARK "#555555"
-#define MENU_BORDER_LIGHT "#EFEFEF"
-#define MENU_BORDER_LIGHT2 "#ACACAC"
 #define FLASH_COLOR "#ccc8d1"
 
-GC bg_gc;
 GC flash_gc;
+GC menu_title_gc;
+GC menu_light_strip_gc;
+GC menu_dark_strip_gc;
 
 void destroy_menuItem(void *data) {
 	MenuItem *item = (MenuItem *)data;
@@ -66,17 +65,8 @@ Window create_menu()
   XGCValues gcv;
   gcv.function = GXcopy;
 
-  gcv.foreground = create_color(MENU_BORDER_DARK).pixel;
-  menu_border_dark_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);
-  gcv.foreground = create_color(MENU_BORDER_LIGHT).pixel;
-  menu_border_light_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);
-  gcv.foreground = create_color(MENU_BORDER_LIGHT2).pixel;
-  menu_border_light2_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);
   gcv.foreground = create_color(FLASH_COLOR).pixel;
-  flash_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);
-  gcv.foreground = bg.pixel;
-  bg_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);
-  
+  flash_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);  
   gcv.foreground = create_color(MENU_TITLE_COLOR).pixel;
   menu_title_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);
   gcv.foreground = create_color(MENU_TITLE_LIGHT_STRIP).pixel;
@@ -126,12 +116,10 @@ void draw_menu_title() {
   int height = MENU_ITEM_HEIGHT - 1;
 	
   XFillRectangle(dpy, root_menu, menu_title_gc, 0, 0, width, height);
-  XDrawLine(dpy, root_menu, menu_border_light_gc, 0, 0, width, 0);
-  XDrawLine(dpy, root_menu, menu_border_light2_gc, 1, 1, width, 1);
-  XDrawLine(dpy, root_menu, menu_border_light_gc, 0, 1, 0, height);
-  XDrawLine(dpy, root_menu, menu_border_light2_gc, 1, 1, 1, height);
-  XDrawLine(dpy, root_menu, menu_border_dark_gc, 1, height - 1, width, height - 1);
-  XDrawLine(dpy, root_menu, menu_border_dark_gc, width - 1, 1, width - 1, height - 1);
+  XDrawLine(dpy, root_menu, focused_light_grey_gc, 0, 0, width, 0);
+  XDrawLine(dpy, root_menu, focused_light_grey_gc, 0, 1, 0, height);
+  XDrawLine(dpy, root_menu, focused_dark_grey_gc, 1, height - 1, width, height - 1);
+  XDrawLine(dpy, root_menu, focused_dark_grey_gc, width - 1, 1, width - 1, height - 1);
   XDrawLine(dpy, root_menu, XDefaultGC(dpy, DefaultScreen(dpy)), width, 0, width, height);
   XDrawLine(dpy, root_menu, XDefaultGC(dpy, DefaultScreen(dpy)), 0, height, width, height);
     for (int i = 0; i < 12; i++) {
@@ -149,18 +137,16 @@ static void draw_menu_item(MenuItem* menu_item, int flash) {
   int height = MENU_ITEM_HEIGHT - 1;
   Window menu_btn = menu_item->window;
   	
-  XDrawLine(dpy, menu_btn, menu_border_light_gc, 0, 0, width, 0);
-  XDrawLine(dpy, menu_btn, menu_border_light2_gc, 1, 1, width, 1);
-  XDrawLine(dpy, menu_btn, menu_border_light_gc, 0, 1, 0, height);
-  XDrawLine(dpy, menu_btn, menu_border_light2_gc, 1, 1, 1, height);
-  XDrawLine(dpy, menu_btn, menu_border_dark_gc, 1, height - 1, width, height - 1);
-  XDrawLine(dpy, menu_btn, menu_border_dark_gc, width - 1, 1, width - 1, height - 1);
+  XDrawLine(dpy, menu_btn, unfocused_light_grey_gc, 0, 0, width, 0);
+  XDrawLine(dpy, menu_btn, unfocused_light_grey_gc, 0, 1, 0, height);
+  XDrawLine(dpy, menu_btn, unfocused_dark_grey_gc, 1, height - 1, width, height - 1);
+  XDrawLine(dpy, menu_btn, unfocused_dark_grey_gc, width - 1, 1, width - 1, height - 1);
   XDrawLine(dpy, menu_btn, XDefaultGC(dpy, DefaultScreen(dpy)), width, 0, width, height);
   XDrawLine(dpy, menu_btn, XDefaultGC(dpy, DefaultScreen(dpy)), 0, height, width, height);
   if (flash) {
     XFillRectangle(dpy, menu_btn, flash_gc, 0, 0, width - 1, height - 2);
   } else {
-    XFillRectangle(dpy, menu_btn, bg_gc, 2, 2, width - 3, height - 3);
+    XFillRectangle(dpy, menu_btn, focused_frame_gc, 2, 2, width - 3, height - 3);
   }
   if (strlen(menu_item->label) > 0) {
 	  XDrawString(dpy, menu_btn, XDefaultGC(dpy, DefaultScreen(dpy)), 7, 15, menu_item->label, strlen(menu_item->label));
@@ -191,10 +177,8 @@ void flash_menu(MenuItem* menu_item) {
 }
 
 void free_menu() {
-  XFreeGC(dpy, menu_border_light_gc);
-  XFreeGC(dpy, menu_border_light2_gc);
-  XFreeGC(dpy, menu_border_dark_gc);
   XFreeGC(dpy, menu_title_gc);
-  XFreeGC(dpy, bg_gc);
   XFreeGC(dpy, flash_gc);
+  XFreeGC(dpy, menu_light_strip_gc);
+  XFreeGC(dpy, menu_dark_strip_gc);
 }
