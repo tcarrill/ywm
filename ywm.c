@@ -1,6 +1,7 @@
 #include <string.h>
 #include <X11/cursorfont.h>
 #include <X11/Xlib.h>
+#include <signal.h>
 #include "menu.h"
 #include "util.h"
 #include "ywm.h"
@@ -96,24 +97,16 @@ void draw_close_button(Display* dpy, Client *client)
 		XDrawLine(dpy, client->close_button, light_red_gc, 2, 2, 2, 10);
 		XDrawLine(dpy, client->close_button, dark_red_gc, 2, 10, 10, 10);
 		XDrawLine(dpy, client->close_button, dark_red_gc, 10, 2, 10, 10);
-	} else {
-  	  	XSetWindowBackground(dpy, client->close_button, create_color(UNFOCUSED_FRAME_COLOR).pixel);
-	    XClearWindow(dpy, client->close_button);
-		XDrawLine(dpy, client->close_button, focused_dark_grey_gc, 0, 0, 12, 0);
-		XDrawLine(dpy, client->close_button, focused_dark_grey_gc, 0, 0, 0, 12);
-		XDrawLine(dpy, client->close_button, unfocused_light_grey_gc, 0, 12, 12, 12);
-		XDrawLine(dpy, client->close_button, unfocused_light_grey_gc, 12, 12, 12, 0);
 		
-		XDrawLine(dpy, client->close_button, unfocused_light_grey_gc, 2, 2, 10, 2);
-		XDrawLine(dpy, client->close_button, unfocused_light_grey_gc, 2, 2, 2, 10);
-		XDrawLine(dpy, client->close_button, unfocused_dark_grey_gc, 2, 10, 10, 10);
-		XDrawLine(dpy, client->close_button, unfocused_dark_grey_gc, 10, 2, 10, 10);
+		XDrawLine(dpy, client->close_button, black_gc, 1, 1, 11, 1);
+		XDrawLine(dpy, client->close_button, black_gc, 1, 1, 1, 11);
+		XDrawLine(dpy, client->close_button, black_gc, 1, 11, 11, 11);
+		XDrawLine(dpy, client->close_button, black_gc, 11, 11, 11, 1);
 	}
-	
-	XDrawLine(dpy, client->close_button, black_gc, 1, 1, 11, 1);
-	XDrawLine(dpy, client->close_button, black_gc, 1, 1, 1, 11);
-	XDrawLine(dpy, client->close_button, black_gc, 1, 11, 11, 11);
-	XDrawLine(dpy, client->close_button, black_gc, 11, 11, 11, 1);
+	 else {
+  	  	XSetWindowBackground(dpy, client->close_button, create_color(UNFOCUSED_FRAME_COLOR).pixel);
+ 	    XClearWindow(dpy, client->close_button);
+	}
 }
 
 void draw_window_titlebar(Display* dpy, Client *client, Rect initial_window) 
@@ -308,10 +301,48 @@ void unframe(Display* dpy, Window win)
 	// XDestroyWindow(dpy, client->frame);
 }
 
+void quit() 
+{
+	printf("Quitting ywm...\n");
+	fflush(stdout);
+	
+	free_menu();
+	// XFreeFont(title_font);
+	XFreeGC(dpy, focused_light_grey_gc);
+	XFreeGC(dpy, focused_dark_grey_gc);
+	XFreeGC(dpy, unfocused_light_grey_gc);
+	XFreeGC(dpy, unfocused_dark_grey_gc);
+	XFreeGC(dpy, focused_frame_gc);
+	XFreeGC(dpy, unfocused_frame_gc);
+	XFreeGC(dpy, light_red_gc);
+	XFreeGC(dpy, dark_red_gc);
+	XFreeGC(dpy, text_gc);
+	
+    ylist_destroy(&clients);
+    ylist_destroy(&focus_stack);
+}
+
+void signal_handler(int signal) 
+{
+	switch(signal) 
+	{
+		case SIGTERM:
+		case SIGINT:
+			quit();
+			break;
+	}
+}
+
 int main()
 {
     XEvent ev;
 
+	struct sigaction sigact;
+	sigact.sa_handler = signal_handler;
+	sigact.sa_flags = 0;
+	sigaction(SIGTERM, &sigact, NULL);
+	sigaction(SIGINT, &sigact, NULL);
+	
     setup_display();
     setup_wm_hints();
 
@@ -371,22 +402,4 @@ int main()
 				// printf("\tIgnoring event\n");
 		}
   }
-  
-  ylist_destroy(&clients);
-  ylist_destroy(&focus_stack);
-}
-
-void quit() 
-{
-	free_menu();
-	// XFreeFont(title_font);
-	XFreeGC(dpy, focused_light_grey_gc);
-	XFreeGC(dpy, focused_dark_grey_gc);
-	XFreeGC(dpy, unfocused_light_grey_gc);
-	XFreeGC(dpy, unfocused_dark_grey_gc);
-	XFreeGC(dpy, focused_frame_gc);
-	XFreeGC(dpy, unfocused_frame_gc);
-	XFreeGC(dpy, light_red_gc);
-	XFreeGC(dpy, dark_red_gc);
-	XFreeGC(dpy, text_gc);
 }
