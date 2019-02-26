@@ -10,7 +10,15 @@ This is under heavy development and will likely be broken at any given time.  I 
 ## Usage
 Right mouse button anywhere but a window will show the root menu.
 
-### Mouse actions on windows
-<kbd class='badmono'>Ctrl</kbd> + left mouse: Move window<br/>
-<kbd class='badmono'>Ctrl</kbd> + middle mouse: Kill window<br/>
-<kbd class='badmono'>Ctrl</kbd> + right mouse: Resize window</br>
+## Root Menu
+The root menu is controlled by the ~/.ywm/ywm.menu.  This is a pipe (|) delimited file in the form of "label|command".  The default file is shown below
+
+```
+Xterm|xterm
+Xclock|xclock
+Xlogo|xlogo
+Xeyes|xeyes
+Xcalc|xcalc
+Xman|xman
+Exit ywm|killall ywm
+```
