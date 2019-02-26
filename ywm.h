@@ -1,6 +1,7 @@
 #ifndef YWM_H
 #define YWM_H
 #include <stdlib.h>
+#include <errno.h>
 // #include <X11/Xft/Xft.h>
 #include "ylist.h"
 #include "client.h"
@@ -22,7 +23,10 @@
 #define RED "#fc5b57"
 #define LIGHT_RED "#ed8887"
 #define DARK_RED "#c45554"
+#define BLUE "#0066cc"
 #define SPACE 3
+
+#define ButtonMask ButtonPressMask | ButtonReleaseMask
 
 GC focused_light_grey_gc;
 GC focused_dark_grey_gc;
@@ -55,13 +59,12 @@ enum AtomsWM {
 Atom atom_wm[NumberOfAtoms];
 
 Point cursor_start_point;
-Point cursor_snapped_point;
 Rect window_start;
 
 YList clients;
 YList focus_stack;
 
-void frame(Display *dpy, Window root, Window win);
-void unframe(Display *dpy, Window win);
-void redraw(Display *dpy, Client *client);
+void frame(Window root, Window win);
+void unframe(Window win);
+void redraw(Client *client);
 #endif

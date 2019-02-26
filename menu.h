@@ -11,10 +11,10 @@
 #define MENU_ITEM_HEIGHT 22
 
 enum menu_item_type
-{
-  Command,
-  Menu
-};
+  {
+    Command,
+    Menu
+  };
 
 typedef struct MenuItem {
   enum menu_item_type type;

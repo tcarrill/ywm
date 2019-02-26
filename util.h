@@ -12,10 +12,11 @@
 #define FRAME 0
 #define CLIENT 1
 #define CLOSE_BTN 2
+#define SHADE_BTN 3
 
 Client* find_client_by_type(Window win, int type);
 Client* find_client(Window win);
-void remove_client(Display* dpy, Client* c);
+void remove_client(Client* c);
 void fork_exec(char *cmd);
 void send_wm_delete(Window window);
 XColor create_color(char* hex);
@@ -25,5 +26,6 @@ int snap_window_right(int x);
 int snap_window_left(int x);
 int snap_window_top(int y);
 int snap_window_bottom(int y);
+int handle_xerror(Display *dpy, XErrorEvent *e);
 
 #endif
