@@ -88,8 +88,6 @@ Client* find_client_by_type(Window win, int type)
       return client;
     } else if (type == CLOSE_BTN && client->close_button == win) {
       return client;
-    } else if (type == SHADE_BTN && client->shade_button == win) {
-      return client;
     }
 		
     curr = curr->next;
@@ -104,7 +102,7 @@ Client* find_client(Window win)
   while (curr != NULL) {
     client = (Client *)curr->data;		
 		
-    if (client->frame == win || client->client == win || client->close_button == win || client->shade_button == win) {
+    if (client->frame == win || client->client == win || client->close_button == win) {
       return client;
     }
 		
@@ -122,7 +120,6 @@ void remove_client(Client* client) {
   }
 	
   XDestroyWindow(dpy, client->close_button);
-  XDestroyWindow(dpy, client->shade_button);	
   XDestroyWindow(dpy, client->frame);
 	
   if (client->title != NULL) {
@@ -176,7 +173,7 @@ int snap_window_bottom(int y)
 
 void print_client(Client* c)
 {
-  printf("Client {\n\tclient = %#lx,\n\tframe = %#lx,\n\tclose_button = %#lx,\n\tshade_button = %#lx\n}\n", c->client, c->frame, c->close_button, c->shade_button);	
+  printf("Client {\n\tclient = %#lx,\n\tframe = %#lx,\n\tclose_button = %#lx,\n}\n", c->client, c->frame, c->close_button);	
   fflush(stdout);
 }
 

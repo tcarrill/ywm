@@ -110,31 +110,6 @@ void draw_close_button(Client *client, Rect initial_window)
   }
 }
 
-void draw_shade_button(Client *client, Rect initial_window)
-{	
-  XMoveWindow(dpy, client->shade_button, initial_window.width - 16, initial_window.y + 4);
-  if (client == focused_client) {
-    XSetWindowBackground(dpy, client->shade_button, create_color(BLUE).pixel);
-    XClearWindow(dpy, client->shade_button);
-    XDrawLine(dpy, client->shade_button, focused_dark_grey_gc, 0, 0, 12, 0);
-    XDrawLine(dpy, client->shade_button, focused_dark_grey_gc, 0, 0, 0, 12);
-    XDrawLine(dpy, client->shade_button, focused_light_grey_gc, 0, 12, 12, 12);
-    XDrawLine(dpy, client->shade_button, focused_light_grey_gc, 12, 12, 12, 0);
-		
-    XDrawLine(dpy, client->shade_button, black_gc, 1, 5, 11, 5);
-    XDrawLine(dpy, client->shade_button, black_gc, 1, 7, 11, 7);
-		
-    XDrawLine(dpy, client->shade_button, black_gc, 1, 1, 11, 1);
-    XDrawLine(dpy, client->shade_button, black_gc, 1, 1, 1, 11);
-    XDrawLine(dpy, client->shade_button, black_gc, 1, 11, 11, 11);
-    XDrawLine(dpy, client->shade_button, black_gc, 11, 11, 11, 1);
-  }
-  else {
-    XSetWindowBackground(dpy, client->shade_button, create_color(UNFOCUSED_FRAME_COLOR).pixel);
-    XClearWindow(dpy, client->shade_button);
-  }
-}
-
 void draw_window_titlebar(Client *client, Rect initial_window) 
 { 	
   int yoffset = 4;
@@ -160,7 +135,7 @@ void draw_window_titlebar(Client *client, Rect initial_window)
     if (client == focused_client) {
       int left_xend_light = titlex - 10;
       int right_xstart_light = titlex + title_width + 7;
-      int right_xend_light = initial_window.width - 23;
+      int right_xend_light = initial_window.width - 7;
 
       int left_xend_dark = left_xend_light + 1;
       int right_xstart_dark = right_xstart_light + 1;
@@ -240,7 +215,6 @@ void redraw(Client *client)
   Rect initial_window = { .x = x, .y = y, .width = width, .height = height};
   draw_window_titlebar(client, initial_window);
   draw_close_button(client, initial_window);
-  draw_shade_button(client, initial_window);
 }
 
 Window create_titlebar_button(Window frame, int x, int y, int w, int h)
@@ -268,7 +242,6 @@ void frame(Window root, Window win)
                                      0xaaaaaa);
 		
   Window close_button = create_titlebar_button(frame, attrs.x + 3, attrs.y + 4, 13, 13);
-  Window shade_button = create_titlebar_button(frame, attrs.width - 16, attrs.y + 4, 13, 13);
 			
   XSelectInput(
                dpy,
@@ -283,7 +256,6 @@ void frame(Window root, Window win)
   client->client = win;
   client->frame = frame;
   client->close_button = close_button;
-  client->shade_button = shade_button;
   // client->xftdraw = XftDrawCreate(dpy, (Drawable) client->frame, DefaultVisual(dpy, DefaultScreen(dpy)), DefaultColormap(dpy, DefaultScreen(dpy)));
 	 
   XFetchName(dpy, win, &client->title);
@@ -293,7 +265,6 @@ void frame(Window root, Window win)
   fflush(stdout);
   XMapWindow(dpy, frame);
   XMapWindow(dpy, close_button);
-  XMapWindow(dpy, shade_button);
 }
 
 void unframe(Window win) 
@@ -305,7 +276,6 @@ void unframe(Window win)
     XRemoveFromSaveSet(dpy, client->client);
 	
     XUnmapWindow(dpy, client->close_button);
-    XUnmapWindow(dpy, client->shade_button);
     XUnmapWindow(dpy, client->frame);
   }
 }
