@@ -315,12 +315,10 @@ void signal_handler(int signal)
       quit();
       break;
     case SIGHUP:
-      printf("SIGHUP caught\n");
-      fflush(stdout);
+      fprintf(stderr, "SIGHUP caught\n");
       break;
     case SIGCHLD:
-      printf("SIGCHLD caught\n");
-      fflush(stdout);
+      fprintf(stderr, "SIGCHLD caught\n");
       while((pid = waitpid(-1, &status, WNOHANG)) != 0) {
         if ((pid == -1) && (errno != EINTR)) {
           break;
@@ -334,6 +332,10 @@ void signal_handler(int signal)
 
 int main()
 {
+#ifdef DEBUG
+  fprintf(stderr, "DEBUG mode is on\n");
+#endif
+
   XEvent ev;
 
   struct sigaction sigact;
@@ -357,7 +359,7 @@ int main()
   while (True) {
     XNextEvent(dpy, &ev);
 #ifdef DEBUG
-    fprintf(stderr, "Received event: %d\n", ev.type);
+    print_event(ev);
 #endif
     switch(ev.type) {
     case KeyPress:
@@ -400,11 +402,6 @@ int main()
       break;
     case EnterNotify:
       on_enter_notify(&ev.xcrossing);
-      break;
-    default:
-#ifdef DEBUG
-      fprintf(stderr, "\tIgnoring event\n");
-#endif
       break;
     }
   }

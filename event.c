@@ -3,9 +3,6 @@
 	
 void on_key_press(const XKeyEvent *ev) 
 {
-#ifdef DEBUG
-  fprintf(stderr, "\ton_key_press()\n");
-#endif
   if (ev->subwindow != None) {
     XRaiseWindow(dpy, ev->subwindow);
   }
@@ -13,9 +10,6 @@ void on_key_press(const XKeyEvent *ev)
 
 void on_button_press(const XButtonEvent *ev)
 {
-#ifdef DEBUG
-  fprintf(stderr, "\ton_button_press()\n");
-#endif
   XWindowAttributes menu_attr;
   XGetWindowAttributes(dpy, root_menu, &menu_attr);
   if (ev->window == root  && ev->subwindow == None) {
@@ -84,9 +78,6 @@ void on_button_press(const XButtonEvent *ev)
 
 void on_button_release(const XButtonEvent *ev)
 {
-#ifdef DEBUG
-  fprintf(stderr, "\ton_button_release()\n");
-#endif
   Client *c = find_client_by_type(ev->window, CLOSE_BTN);
   if (c != NULL) {
     send_wm_delete(c->client);	
@@ -98,9 +89,6 @@ void on_button_release(const XButtonEvent *ev)
 
 void on_motion_notify(const XMotionEvent *ev)
 {
-#ifdef DEBUG
-  fprintf(stderr, "\ton_motion_notify()\n");
-#endif
   int xdiff = ev->x_root - cursor_start_point.x;
   int ydiff = ev->y_root - cursor_start_point.y;
   Client *c = find_client(ev->window);
@@ -135,9 +123,6 @@ void on_motion_notify(const XMotionEvent *ev)
 
 void on_expose(const XExposeEvent *ev)
 {
-#ifdef DEBUG
-  fprintf(stderr, "\ton_expose()\n");
-#endif
   if (ev->count == 0) {
     Client* c = find_client(ev->window);
     if (c != NULL) {
@@ -154,23 +139,14 @@ void on_expose(const XExposeEvent *ev)
 
 void on_reparent_notify(const XReparentEvent *ev)
 {
-#ifdef DEBUG
-  fprintf(stderr, "\ton_reparent_notify()\n");
-#endif
 }
 
 void on_create_notify(const XCreateWindowEvent *ev)
 {
-#ifdef DEBUG
-  fprintf(stderr, "\ton_create_notify()\n");
-#endif
 }
 
 void on_destroy_notify(const XDestroyWindowEvent *ev)
 {
-#ifdef DEBUG
-  fprintf(stderr, "\ton_destroy_notify(%#lx)\n", ev->window);
-#endif
   Client *c = find_client(ev->window);
   if (c != NULL) {
     remove_client(c);
@@ -179,9 +155,6 @@ void on_destroy_notify(const XDestroyWindowEvent *ev)
 
 void on_configure_request(const XConfigureRequestEvent *ev)
 {
-#ifdef DEBUG
-  fprintf(stderr, "\ton_configure_request()\n");
-#endif
   XWindowChanges changes;
   changes.x = ev->x;
   changes.y = ev->y;
@@ -199,16 +172,10 @@ void on_configure_request(const XConfigureRequestEvent *ev)
 
 void on_configure_notify(const XConfigureEvent* ev)
 {
-#ifdef DEBUG
-  fprintf(stderr, "\ton_configure_notify()\n");
-#endif
 }
 
 void on_map_request(Window root, const XMapRequestEvent* ev)
 {
-#ifdef DEBUG
-  fprintf(stderr, "\ton_map_request()\n");
-#endif
   Client *c = find_client(ev->window);
   if (c == NULL) {
     frame(root, ev->window);
@@ -218,9 +185,6 @@ void on_map_request(Window root, const XMapRequestEvent* ev)
 
 void on_unmap_notify(const XUnmapEvent* ev) 
 {
-#ifdef DEBUG
-  fprintf(stderr, "\ton_unmap_notify()\n");
-#endif
   // printf("\ton_unmap_notify()\n");
   // Client *c = find_client(ev->window);
   // print_client(c);
@@ -231,9 +195,6 @@ void on_unmap_notify(const XUnmapEvent* ev)
 
 void on_enter_notify(const XCrossingEvent* ev)
 {
-#ifdef DEBUG
-  fprintf(stderr, "\ton_enter_notify()\n");
-#endif
   focused_client = find_client(ev->window);
 	
   YNode *curr = ylist_head(&clients);

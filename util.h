@@ -27,5 +27,5 @@ int snap_window_left(int x);
 int snap_window_top(int y);
 int snap_window_bottom(int y);
 int handle_xerror(Display *dpy, XErrorEvent *e);
-
+void print_event(XEvent ev);
 #endif

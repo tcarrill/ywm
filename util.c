@@ -195,3 +195,26 @@ int handle_xerror(Display *dpy, XErrorEvent *e)
   }
   return 0;
 }
+
+void print_event(XEvent ev) 
+{
+  fprintf(stderr, "Received event: %d ", ev.type);
+  switch(ev.type) {
+    case KeyPress: fprintf(stderr, "[KeyPress]\n"); break;
+    case KeyRelease: fprintf(stderr, "[KeyRelease]\n"); break;
+    case ButtonPress: fprintf(stderr, "[ButtonPress]\n"); break;
+    case ButtonRelease: fprintf(stderr, "[ButtonRelease]\n"); break;
+    case MotionNotify: fprintf(stderr, "[MotionNotify]\n"); break;
+    case Expose: fprintf(stderr, "[Expose]\n"); break;
+    case CreateNotify: fprintf(stderr, "[CreateNotify]\n"); break;
+    case DestroyNotify: fprintf(stderr, "[DestroyNotify]\n"); break;
+    case ReparentNotify: fprintf(stderr, "[ReparentNotify]\n"); break;
+    case ConfigureRequest: fprintf(stderr, "[ConfigureRequest]\n"); break;
+    case ConfigureNotify: fprintf(stderr, "[ConfigureNotify]\n"); break;
+    case MapRequest: fprintf(stderr, "[MapRequest]\n"); break;
+    case MapNotify: fprintf(stderr, "[MapNotify]\n"); break;
+    case UnmapNotify: fprintf(stderr, "[UnmapNotify]\n"); break;
+    case EnterNotify: fprintf(stderr, "[EnterNotify]\n"); break;
+    default: fprintf(stderr, "[Unknown event]\n"); break;
+  }
+}
