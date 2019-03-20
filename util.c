@@ -149,7 +149,7 @@ int snap_buffer = 25;
 int resistance_threshold = 50;
 int snap_window_right(int x)
 {
-  int x_distance = x + window_start.width + snap_buffer;
+  int x_distance = x + start_window_geom.width + snap_buffer;
   return x_distance >= screen_w && x_distance <= screen_w + resistance_threshold;	
 }
 
@@ -167,7 +167,7 @@ int snap_window_top(int y)
 
 int snap_window_bottom(int y)
 {
-  int y_distance = y + window_start.height + snap_buffer;
+  int y_distance = y + start_window_geom.height + snap_buffer;
   return y_distance >= screen_h && y_distance <= screen_h + resistance_threshold;
 }
 

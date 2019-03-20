@@ -82,7 +82,13 @@ static void setup_display()
   black_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
 
   XClearWindow(dpy, root);
-  XDefineCursor(dpy, root, XCreateFontCursor(dpy, XC_left_ptr));
+
+
+  pointer = XCreateFontCursor(dpy, XC_left_ptr);
+  resize_v = XCreateFontCursor(dpy, XC_sb_v_double_arrow);
+  resize_h = XCreateFontCursor(dpy, XC_sb_h_double_arrow);
+
+  XDefineCursor(dpy, root, pointer);
 }
 
 void draw_close_button(Client *client, Rect initial_window)
@@ -212,6 +218,20 @@ void redraw(Client *client)
   // bottom
   XDrawLine(dpy, client->frame, dark_gc, 1, height - 1, width, height - 1);
   
+  // lower left corder
+  XDrawLine(dpy, client->frame, dark_gc, 0, height - FRAME_CORNER_OFFSET, FRAME_BORDER_WIDTH, height - FRAME_CORNER_OFFSET);
+  XDrawLine(dpy, client->frame, light_gc, 0, height - FRAME_CORNER_OFFSET + 1, FRAME_BORDER_WIDTH, height - FRAME_CORNER_OFFSET + 1);
+
+  XDrawLine(dpy, client->frame, dark_gc, FRAME_CORNER_OFFSET, height - FRAME_BORDER_WIDTH, FRAME_CORNER_OFFSET, height);
+  XDrawLine(dpy, client->frame, light_gc, FRAME_CORNER_OFFSET + 1, height - FRAME_BORDER_WIDTH, FRAME_CORNER_OFFSET + 1, height);
+  
+  // lower right corner
+  XDrawLine(dpy, client->frame, dark_gc, width - FRAME_CORNER_OFFSET, height - FRAME_BORDER_WIDTH, width - FRAME_CORNER_OFFSET, height);
+  XDrawLine(dpy, client->frame, light_gc, width - FRAME_CORNER_OFFSET + 1, height - FRAME_BORDER_WIDTH, width - FRAME_CORNER_OFFSET + 1, height);
+  
+  XDrawLine(dpy, client->frame, dark_gc, width - FRAME_BORDER_WIDTH, height - FRAME_CORNER_OFFSET, width, height - FRAME_CORNER_OFFSET);  
+  XDrawLine(dpy, client->frame, light_gc, width - FRAME_BORDER_WIDTH, height - FRAME_CORNER_OFFSET + 1, width, height - FRAME_CORNER_OFFSET + 1);
+
   Rect initial_window = { .x = x, .y = y, .width = width, .height = height};
   draw_window_titlebar(client, initial_window);
   draw_close_button(client, initial_window);
@@ -296,7 +316,10 @@ void quit()
   XFreeGC(dpy, dark_red_gc);
   XFreeGC(dpy, text_gc);
   XFreeGC(dpy, black_gc);
-	
+  XFreeCursor(dpy, pointer);
+  XFreeCursor(dpy, resize_v);
+  XFreeCursor(dpy, resize_h);	
+
   ylist_destroy(&clients);
   ylist_destroy(&focus_stack);
   XCloseDisplay(dpy);
@@ -402,6 +425,9 @@ int main()
       break;
     case EnterNotify:
       on_enter_notify(&ev.xcrossing);
+      break;
+    case LeaveNotify:
+      on_leave_notify(&ev.xcrossing);
       break;
     }
   }

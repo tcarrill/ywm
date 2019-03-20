@@ -2,6 +2,7 @@
 #define YWM_H
 #include <stdlib.h>
 #include <errno.h>
+#include <X11/cursorfont.h>
 // #include <X11/Xft/Xft.h>
 #include "ylist.h"
 #include "client.h"
@@ -11,6 +12,7 @@
 // #define DEF_FONT "-bitstream-bitstream vera sans-medium-r-*-*-*-100-*-*-*-*-*-*"
 #define FRAME_TITLEBAR_HEIGHT 20
 #define FRAME_BORDER_WIDTH 4
+#define FRAME_CORNER_OFFSET 20
 
 #define FOCUSED_FRAME_COLOR "#aaaaaa"
 #define FOCUSED_LIGHT_GREY "#cacaca"
@@ -59,7 +61,13 @@ enum AtomsWM {
 Atom atom_wm[NumberOfAtoms];
 
 Point cursor_start_point;
-Rect window_start;
+Point cursor_start_win_point;
+Rect start_window_geom;
+Rect current_window_geom;
+
+Cursor pointer;
+Cursor resize_v;
+Cursor resize_h; 
 
 YList clients;
 YList focus_stack;

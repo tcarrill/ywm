@@ -1,6 +1,8 @@
 #include "event.h"
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
-	
+
+Point prev_mouse_xy;
+
 void on_key_press(const XKeyEvent *ev) 
 {
   if (ev->subwindow != None) {
@@ -51,8 +53,11 @@ void on_button_press(const XButtonEvent *ev)
                  &border_width,
                  &depth);
 			
-    cursor_start_point = (Point){ .x = ev->x_root, .y = ev->y_root };	
-    window_start = (Rect){ .x = x, .y = y, .width = width, .height = height };
+    cursor_start_point = (Point){ .x = ev->x_root, .y = ev->y_root };
+    cursor_start_win_point = (Point){ .x = ev->x, .y = ev->y };	
+    prev_mouse_xy = (Point){ .x = ev->x_root, .y = ev->y_root };
+    start_window_geom = (Rect){ .x = x, .y = y, .width = width, .height = height };
+    current_window_geom = (Rect){ .x = x, .y = y, .width = width, .height = height };
 
     XGrabPointer(dpy, 
                  ev->window, 
@@ -89,36 +94,116 @@ void on_button_release(const XButtonEvent *ev)
 
 void on_motion_notify(const XMotionEvent *ev)
 {
-  int xdiff = ev->x_root - cursor_start_point.x;
-  int ydiff = ev->y_root - cursor_start_point.y;
   Client *c = find_client(ev->window);
-	
-  if (ev->state & Button1Mask && c->close_button != ev->window) {
-    int x = window_start.x + xdiff;
-    int y = window_start.y + ydiff;
+
+  int x = current_window_geom.x;
+  int y = current_window_geom.y;
+  int width = current_window_geom.width;
+  int height = current_window_geom.height;
+  
+  if (ev->state & Button1Mask && c->close_button != ev->window && !is_resize_frame(cursor_start_win_point)) {
+    int xdiff = ev->x_root - cursor_start_point.x;
+    int ydiff = ev->y_root - cursor_start_point.y;
+
+    x = start_window_geom.x + xdiff;
+    y = start_window_geom.y + ydiff;
 		
     if (snap_window_right(x)) { 
-      x = screen_w - window_start.width;		
+      x = screen_w - start_window_geom.width;		
     } else if (snap_window_left(x)) {	
       x = 0;
     } 
 		
     if (snap_window_bottom(y)) { 
-      y = screen_h - window_start.height;
+      y = screen_h - start_window_geom.height;
     } else if (snap_window_top(y)) {
       y = 0;
     }
 		
     XMoveWindow(dpy, ev->window, x, y);
-  } else if (ev->state & Button3Mask) {
-    int width = window_start.width + xdiff;
-    int height = window_start.height + ydiff;
-		
-    if (width > 25 && height > 10) {
+  } else { // resize motion        
+    if (is_lower_left_corner(cursor_start_win_point)) {
+      int xdiff = ev->x_root - prev_mouse_xy.x;
+      int ydiff = ev->y_root - prev_mouse_xy.y;
+       
+      width = start_window_geom.width + xdiff;
+      height = start_window_geom.height + ydiff;
+      
+      x = current_window_geom.x + xdiff;
+      if (ev->x_root < prev_mouse_xy.x) {
+        width = current_window_geom.width + abs(xdiff);
+      } else {
+        width = current_window_geom.width - abs(xdiff);
+      }      
+
+      if (ev->y_root < prev_mouse_xy.y) {
+        height = current_window_geom.height - abs(ydiff);
+      } else {
+        height = current_window_geom.height + abs(ydiff);
+      }
+
+      XMoveResizeWindow(dpy, 
+                        c->frame, 
+                        x, 
+                        current_window_geom.y, 
+                        width, 
+                        height);
+      XMoveResizeWindow(dpy,
+                        c->client,
+                        FRAME_BORDER_WIDTH,
+                        FRAME_TITLEBAR_HEIGHT,
+                        width - 10,
+                        height - 26);
+
+    } else if (is_lower_right_corner(cursor_start_win_point)) {
+      int xdiff = ev->x_root - cursor_start_point.x;
+      int ydiff = ev->y_root - cursor_start_point.y;
+
+      width = start_window_geom.width + xdiff;
+      height = start_window_geom.height + ydiff;
+      
       XResizeWindow(dpy, c->frame, width + 10, height + 26);
-      XResizeWindow(dpy, c->client, width, height);
+      XResizeWindow(dpy, c->client, width, height);  
+    } else {
+      int xdiff = ev->x_root - prev_mouse_xy.x;
+      int ydiff = ev->y_root - prev_mouse_xy.y;
+
+      if (is_left_frame(cursor_start_win_point.x)) {
+        x = current_window_geom.x + xdiff;
+        if (ev->x_root < prev_mouse_xy.x) {
+          width = current_window_geom.width + abs(xdiff);
+        } else {
+          width = current_window_geom.width - abs(xdiff);
+        }
+      } else if (is_right_frame(cursor_start_win_point.x)) {
+        if (ev->x_root < prev_mouse_xy.x) {
+          width = current_window_geom.width - abs(xdiff);
+        } else {
+          width = current_window_geom.width + abs(xdiff);
+        }
+      } else if (is_bottom_frame(cursor_start_win_point.y)) {
+        if (ev->y_root < prev_mouse_xy.y) {
+          height = current_window_geom.height - abs(ydiff);
+        } else {
+          height = current_window_geom.height + abs(ydiff);
+        }
+      }
+      XMoveResizeWindow(dpy, 
+                        c->frame, 
+                        x, 
+                        current_window_geom.y, 
+                        width, 
+                        height);
+      XMoveResizeWindow(dpy,
+                        c->client,
+                        FRAME_BORDER_WIDTH,
+                        FRAME_TITLEBAR_HEIGHT,
+                        width - 10,
+                        height - 26);
     }
   }
+  current_window_geom = (Rect){ .x = x, .y = y, .width = width, .height = height };
+  prev_mouse_xy = (Point){ .x = ev->x_root, .y = ev->y_root };
 }
 
 void on_expose(const XExposeEvent *ev)
@@ -164,10 +249,10 @@ void on_configure_request(const XConfigureRequestEvent *ev)
   changes.sibling = ev->above;
   changes.stack_mode = ev->detail;
   XConfigureWindow(dpy, ev->window, ev->value_mask, &changes);
-  Client* c = find_client(ev->window);
-  if (c != NULL) {
-    redraw(c);
-  }
+  //Client* c = find_client(ev->window);
+  //if (c != NULL) {
+  //  redraw(c);
+  //}
 }
 
 void on_configure_notify(const XConfigureEvent* ev)
@@ -196,6 +281,21 @@ void on_unmap_notify(const XUnmapEvent* ev)
 void on_enter_notify(const XCrossingEvent* ev)
 {
   focused_client = find_client(ev->window);
+  /*
+  if (ev->window != root) { 
+    if (is_left_frame(ev->x)) {
+      XDefineCursor(dpy, ev->window, resize_h);
+    } else if (is_right_frame(ev->x)) {
+      XDefineCursor(dpy, ev->window, resize_h);  
+    } else if (is_bottom_frame(ev->y)) {
+      XDefineCursor(dpy, ev->window, resize_v);
+    } else if (is_top_frame(ev->y)) {
+      XDefineCursor(dpy, ev->window, resize_v);
+    } else {
+      XDefineCursor(dpy, ev->window, pointer);
+    }
+  }
+  */
 	
   YNode *curr = ylist_head(&clients);
   while (curr != NULL) {
@@ -203,4 +303,49 @@ void on_enter_notify(const XCrossingEvent* ev)
     redraw(client);
     curr = curr->next;
   }
+}
+void on_leave_notify(const XCrossingEvent* ev) 
+{
+/*
+  if (is_left_frame(ev->x)) {
+    XDefineCursor(dpy, ev->window, resize_h);
+  } else if (is_right_frame(ev->x)) {
+    XDefineCursor(dpy, ev->window, resize_h);  
+  } else if (is_bottom_frame(ev->y)) {
+    XDefineCursor(dpy, ev->window, resize_v);
+  } else if (is_top_frame(ev->y)) {
+    XDefineCursor(dpy, ev->window, resize_v);
+  }
+*/ 
+}
+
+int is_left_frame(int x) 
+{
+  return x >= 0 && x <= FRAME_BORDER_WIDTH;
+}
+
+int is_right_frame(int x)
+{
+  return x >= (start_window_geom.width - FRAME_BORDER_WIDTH) && x <= start_window_geom.width;
+}
+
+int is_bottom_frame(int y)
+{
+  return y >= (start_window_geom.height - FRAME_BORDER_WIDTH) && y <= start_window_geom.height;
+}
+
+int is_lower_left_corner(Point p)
+{
+  return (is_bottom_frame(p.y) && p.x <= FRAME_CORNER_OFFSET) || (is_left_frame(p.x) && p.y >= (start_window_geom.height - FRAME_CORNER_OFFSET));
+}
+
+int is_lower_right_corner(Point p)
+{
+  return (is_bottom_frame(p.y) && p.x >= start_window_geom.width - FRAME_CORNER_OFFSET) 
+    || (is_right_frame(p.x) && p.y >= start_window_geom.height - FRAME_CORNER_OFFSET);
+}
+
+int is_resize_frame(Point p)
+{
+  return is_bottom_frame(p.y) || is_left_frame(p.x) || is_right_frame(p.x);
 }

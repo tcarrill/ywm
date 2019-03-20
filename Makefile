@@ -4,7 +4,7 @@ INCLUDES = -I/opt/X11/include/freetype2/ -arch x86_64 -I/opt/X11/include/
 CFLAGS = -Wall
 OBJS = ywm.o menu.o event.o util.o ylist.o
 BIN = ywm
-DEFINES += -DDEBUG
+#DEFINES += -DDEBUG
 
 all: $(BIN)
 
