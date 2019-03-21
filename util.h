@@ -26,6 +26,12 @@ int snap_window_right(int x);
 int snap_window_left(int x);
 int snap_window_top(int y);
 int snap_window_bottom(int y);
+int is_left_frame(int x);
+int is_right_frame(int x);
+int is_bottom_frame(int y);
+int is_lower_left_corner(Point point);
+int is_lower_right_corner(Point point);
+int is_resize_frame(Point point);
 int handle_xerror(Display *dpy, XErrorEvent *e);
 void print_event(XEvent ev);
 #endif

@@ -23,10 +23,4 @@ void on_map_request(Window root, const XMapRequestEvent* ev);
 void on_unmap_notify(const XUnmapEvent* ev);
 void on_enter_notify(const XCrossingEvent* ev);
 void on_leave_notify(const XCrossingEvent* ev);
-int is_left_frame(int x);
-int is_right_frame(int x);
-int is_bottom_frame(int y);
-int is_lower_left_corner(Point point);
-int is_lower_right_corner(Point point);
-int is_resize_frame(Point point);
 #endif

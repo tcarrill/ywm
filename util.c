@@ -173,6 +173,37 @@ int snap_window_bottom(int y)
   return y_distance >= screen_h && y_distance <= screen_h + resistance_threshold;
 }
 
+int is_left_frame(int x) 
+{
+  return x >= 0 && x <= FRAME_BORDER_WIDTH;
+}
+
+int is_right_frame(int x)
+{
+  return x >= (start_window_geom.width - FRAME_BORDER_WIDTH) && x <= start_window_geom.width;
+}
+
+int is_bottom_frame(int y)
+{
+  return y >= (start_window_geom.height - FRAME_BORDER_WIDTH) && y <= start_window_geom.height;
+}
+
+int is_lower_left_corner(Point p)
+{
+  return (is_bottom_frame(p.y) && p.x <= FRAME_CORNER_OFFSET) || (is_left_frame(p.x) && p.y >= (start_window_geom.height - FRAME_CORNER_OFFSET));
+}
+
+int is_lower_right_corner(Point p)
+{
+  return (is_bottom_frame(p.y) && p.x >= start_window_geom.width - FRAME_CORNER_OFFSET) 
+    || (is_right_frame(p.x) && p.y >= start_window_geom.height - FRAME_CORNER_OFFSET);
+}
+
+int is_resize_frame(Point p)
+{
+  return is_bottom_frame(p.y) || is_left_frame(p.x) || is_right_frame(p.x);
+}
+
 void print_client(Client* c)
 {
   fprintf(stderr, "Client {\n\tclient = %#lx,\n\tframe = %#lx,\n\tclose_button = %#lx,\n}\n", c->client, c->frame, c->close_button);	
