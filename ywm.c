@@ -279,17 +279,20 @@ void frame(Window root, Window win)
   // client->xftdraw = XftDrawCreate(dpy, (Drawable) client->frame, DefaultVisual(dpy, DefaultScreen(dpy)), DefaultColormap(dpy, DefaultScreen(dpy)));
 	 
   XFetchName(dpy, win, &client->title);
-  print_client(client);
   ylist_ins_prev(&clients, ylist_head(&clients), client);
-  printf("Managed clients: %d\n", ylist_size(&clients));
-  fflush(stdout);
+#ifdef DEBUG  
+  print_client(client);
+  fprintf(stderr, "Managed clients: %d\n", ylist_size(&clients));
+#endif
   XMapWindow(dpy, frame);
   XMapWindow(dpy, close_button);
 }
 
 void unframe(Window win) 
 {
-  printf("unframe\n");
+#ifdef DEBUG
+  fprintf(stderr, "unframe\n");
+#endif
   Client *client = find_client(win);
   if (client != NULL) {
     XReparentWindow(dpy, client->client, root, 0, 0);
@@ -302,7 +305,7 @@ void unframe(Window win)
 
 void quit() 
 {
-  printf("Quitting ywm...\n");
+  fprintf(stderr, "Quitting ywm...\n");
 	
   free_menu();
   XFreeFont(dpy, title_font);
@@ -338,10 +341,14 @@ void signal_handler(int signal)
       quit();
       break;
     case SIGHUP:
-      fprintf(stderr, "SIGHUP caught\n");
+#ifdef DEBUG
+  fprintf(stderr, "SIGHUP caught\n");
+#endif
       break;
     case SIGCHLD:
-      fprintf(stderr, "SIGCHLD caught\n");
+#ifdef DEBUG
+  fprintf(stderr, "SIGCHLD caught\n");
+#endif
       while((pid = waitpid(-1, &status, WNOHANG)) != 0) {
         if ((pid == -1) && (errno != EINTR)) {
           break;
@@ -353,7 +360,7 @@ void signal_handler(int signal)
     }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
 #ifdef DEBUG
   fprintf(stderr, "DEBUG mode is on\n");

@@ -112,7 +112,9 @@ Client* find_client(Window win)
 }
 
 void remove_client(Client* client) {
-  printf("remove_client\n");
+#ifdef DEBUG
+  fprintf(stderr, "remove_client\n");
+#endif
   XGrabServer(dpy);
 	
   if (client->client) {
@@ -173,8 +175,7 @@ int snap_window_bottom(int y)
 
 void print_client(Client* c)
 {
-  printf("Client {\n\tclient = %#lx,\n\tframe = %#lx,\n\tclose_button = %#lx,\n}\n", c->client, c->frame, c->close_button);	
-  fflush(stdout);
+  fprintf(stderr, "Client {\n\tclient = %#lx,\n\tframe = %#lx,\n\tclose_button = %#lx,\n}\n", c->client, c->frame, c->close_button);	
 }
 
 int handle_xerror(Display *dpy, XErrorEvent *e)

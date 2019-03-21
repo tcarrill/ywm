@@ -122,43 +122,9 @@ void on_motion_notify(const XMotionEvent *ev)
 		
     XMoveWindow(dpy, ev->window, x, y);
   } else { // resize motion        
-    if (is_lower_left_corner(cursor_start_win_point)) {
-      int xdiff = ev->x_root - prev_mouse_xy.x;
-      int ydiff = ev->y_root - prev_mouse_xy.y;
-       
-      width = start_window_geom.width + xdiff;
-      height = start_window_geom.height + ydiff;
-      
-      x = current_window_geom.x + xdiff;
-      if (ev->x_root < prev_mouse_xy.x) {
-        width = current_window_geom.width + abs(xdiff);
-      } else {
-        width = current_window_geom.width - abs(xdiff);
-      }      
-
-      if (ev->y_root < prev_mouse_xy.y) {
-        height = current_window_geom.height - abs(ydiff);
-      } else {
-        height = current_window_geom.height + abs(ydiff);
-      }
-
-      XMoveResizeWindow(dpy, 
-                        c->frame, 
-                        x, 
-                        current_window_geom.y, 
-                        width, 
-                        height);
-      XMoveResizeWindow(dpy,
-                        c->client,
-                        FRAME_BORDER_WIDTH,
-                        FRAME_TITLEBAR_HEIGHT,
-                        width - 10,
-                        height - 26);
-
-    } else if (is_lower_right_corner(cursor_start_win_point)) {
+    if (is_lower_right_corner(cursor_start_win_point)) {
       int xdiff = ev->x_root - cursor_start_point.x;
       int ydiff = ev->y_root - cursor_start_point.y;
-
       width = start_window_geom.width + xdiff;
       height = start_window_geom.height + ydiff;
       
@@ -167,41 +133,24 @@ void on_motion_notify(const XMotionEvent *ev)
     } else {
       int xdiff = ev->x_root - prev_mouse_xy.x;
       int ydiff = ev->y_root - prev_mouse_xy.y;
-
-      if (is_left_frame(cursor_start_win_point.x)) {
+      if (is_lower_left_corner(cursor_start_win_point)) {
         x = current_window_geom.x + xdiff;
-        if (ev->x_root < prev_mouse_xy.x) {
-          width = current_window_geom.width + abs(xdiff);
-        } else {
-          width = current_window_geom.width - abs(xdiff);
-        }
+        width = current_window_geom.width + (xdiff * -1);
+        height = current_window_geom.height + ydiff;
+      } else if (is_left_frame(cursor_start_win_point.x)) {
+        x = current_window_geom.x + xdiff;
+        width = current_window_geom.width + (xdiff * -1);
       } else if (is_right_frame(cursor_start_win_point.x)) {
-        if (ev->x_root < prev_mouse_xy.x) {
-          width = current_window_geom.width - abs(xdiff);
-        } else {
-          width = current_window_geom.width + abs(xdiff);
-        }
+        width = current_window_geom.width + xdiff;
       } else if (is_bottom_frame(cursor_start_win_point.y)) {
-        if (ev->y_root < prev_mouse_xy.y) {
-          height = current_window_geom.height - abs(ydiff);
-        } else {
-          height = current_window_geom.height + abs(ydiff);
-        }
+        height = current_window_geom.height + ydiff;
       }
-      XMoveResizeWindow(dpy, 
-                        c->frame, 
-                        x, 
-                        current_window_geom.y, 
-                        width, 
-                        height);
-      XMoveResizeWindow(dpy,
-                        c->client,
-                        FRAME_BORDER_WIDTH,
-                        FRAME_TITLEBAR_HEIGHT,
-                        width - 10,
-                        height - 26);
+
+      XMoveResizeWindow(dpy, c->frame, x, y, width, height);
+      XMoveResizeWindow(dpy, c->client, FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT, width - 10, height - 26);
     }
   }
+
   current_window_geom = (Rect){ .x = x, .y = y, .width = width, .height = height };
   prev_mouse_xy = (Point){ .x = ev->x_root, .y = ev->y_root };
 }
