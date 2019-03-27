@@ -13,6 +13,24 @@ GC menu_title_gc;
 GC menu_light_strip_gc;
 GC menu_dark_strip_gc;
 
+void write_default_menu_file() {
+  const char* const default_menu[] = {
+    "Xterm|xterm",
+    "Xclock|xclock",
+    "Xeyes|xeyes",
+    "Xcalc|xcalc",
+    "Exit ywm|killall ywm"
+  };
+
+  char menupath[1024]; 
+  snprintf(menupath, sizeof(menupath), "%s/.ywm/ywm.menu", getenv("HOME"));
+  FILE *fp = fopen(menupath, "w");
+  for (int i = 0; i < 5; i++) {
+    fprintf(fp, "%s\n", default_menu[i]);
+  }
+  fclose(fp);
+}
+
 void destroy_menuItem(void *data) {
   MenuItem *item = (MenuItem *)data;
   free(item->label);
@@ -56,8 +74,8 @@ Window create_menu()
   snprintf(menupath, sizeof(menupath), "%s/.ywm/ywm.menu", getenv("HOME"));
   fp = fopen(menupath, "r");
   if (fp == NULL) {
-    fprintf(stderr, "Cannot open %s/.ywm/ywm.menu\n", getenv("HOME"));
-    exit(EXIT_FAILURE);
+    fprintf(stderr, "Cannot open %s/.ywm/ywm.menu\n Using default ywm.menu", getenv("HOME"));
+    write_default_menu_file();
   } 	
   int menu_size = 0;
   while(!feof(fp)) {
