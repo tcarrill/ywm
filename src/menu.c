@@ -1,3 +1,5 @@
+#include <sys/stat.h>
+#include <limits.h>
 #include "menu.h"
 
 #define TITLE_BAR_HEIGHT 22
@@ -7,11 +9,16 @@
 #define MENU_TITLE_DARK_STRIP "#5d5d68"
 #define MENU_BG_COLOR "#AAAAAA"
 #define FLASH_COLOR "#ccc8d1"
+#define YWM_DIR ".ywm"
+#define MENU_FILE "ywm.menu"
 
 GC flash_gc;
 GC menu_title_gc;
 GC menu_light_strip_gc;
 GC menu_dark_strip_gc;
+
+char ywm_path[PATH_MAX];
+char ywm_menu_path[PATH_MAX];
 
 void write_default_menu_file() {
   const char* const default_menu[] = {
@@ -21,14 +28,14 @@ void write_default_menu_file() {
     "Xcalc|xcalc",
     "Exit ywm|killall ywm"
   };
-
-  char menupath[1024]; 
-  snprintf(menupath, sizeof(menupath), "%s/.ywm/ywm.menu", getenv("HOME"));
-  FILE *fp = fopen(menupath, "w");
-  for (int i = 0; i < 5; i++) {
-    fprintf(fp, "%s\n", default_menu[i]);
+  int status = mkdir_p(ywm_path);
+  if (status == 0) {
+    FILE *fp = fopen(ywm_menu_path, "w");
+    for (int i = 0; i < 5; i++) {
+      fprintf(fp, "%s\n", default_menu[i]);
+    }
+    fclose(fp);
   }
-  fclose(fp);
 }
 
 void destroy_menuItem(void *data) {
@@ -40,14 +47,21 @@ void destroy_menuItem(void *data) {
 
 MenuItem* menuItem_new(char *label, char *command, Window win) 
 {
+  fprintf(stderr, "Creating menu item '%s' with command '%s'\n", label, command);
   MenuItem *menuItem = malloc(sizeof(MenuItem));
   menuItem->label = malloc(sizeof(char) * strlen(label));
   menuItem->command = malloc(sizeof(char) * strlen(command));
   menuItem->window = win;
-  strncpy(menuItem->label, label, strlen(label));
+  strncpy(menuItem->label, label, strlen(label) + 1);
   strncpy(menuItem->command, command, strlen(command));
-	
+  fprintf(stderr, "[%lu] %s, [%lu] %s\n", strlen(label), menuItem->label, strlen(command), menuItem->command);
   return menuItem;
+}
+
+FILE* open_menu_file(char *path) 
+{
+  FILE *fp = fopen(path, "r");
+  return fp;
 }
 
 Window create_menu()
@@ -65,18 +79,15 @@ Window create_menu()
   gcv.foreground = create_color(MENU_TITLE_DARK_STRIP).pixel;
   menu_dark_strip_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);
   
-  FILE *fp;
-  char *line = NULL;
-  size_t len = 0;
-  ssize_t read;
-     
-  char menupath[1024]; 
-  snprintf(menupath, sizeof(menupath), "%s/.ywm/ywm.menu", getenv("HOME"));
-  fp = fopen(menupath, "r");
+  snprintf(ywm_path, sizeof(ywm_path), "%s/%s", getenv("HOME"), YWM_DIR);  
+  snprintf(ywm_menu_path, sizeof(ywm_menu_path), "%s/%s", ywm_path, MENU_FILE);
+  FILE *fp = open_menu_file(ywm_menu_path);
   if (fp == NULL) {
-    fprintf(stderr, "Cannot open %s/.ywm/ywm.menu\n Using default ywm.menu", getenv("HOME"));
+    fprintf(stderr, "Cannot open %s\n", ywm_menu_path);
     write_default_menu_file();
-  } 	
+    fp = open_menu_file(ywm_menu_path);
+  }
+   	
   int menu_size = 0;
   while(!feof(fp)) {
     char ch = fgetc(fp);
@@ -94,6 +105,10 @@ Window create_menu()
                                         bg.pixel);
   XSelectInput(dpy, menu_win, ButtonMask | ExposureMask);
 
+  char *line = NULL;
+  size_t len = 0;
+  ssize_t read;
+     
   int index = 0;
   while ((read = getline(&line, &len, fp)) != -1) {
     size_t ln = strlen(line) - 1;
