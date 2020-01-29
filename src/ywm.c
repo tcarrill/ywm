@@ -32,30 +32,23 @@ static void setup_display()
 
   XColor backgroundColor = create_color("#666797");
   XSetWindowBackground(dpy, root, backgroundColor.pixel);
-  // xft_detail.color.red = 65535;
-  // xft_detail.color.green = 65535;
-  // xft_detail.color.blue = 65535;
-  // xft_detail.color.alpha = 65535;
-  // xft_detail.pixel = 65535;
-
-  // xftfont = XftFontOpenName(dpy, DefaultScreen(dpy), "Arial-11");
-  // if (xftfont == NULL)
-  // {
-  // 	 printf("font '%s' not found", DEF_FONT);
-  // 	 exit(1);
-  // }
-
-  title_font = XLoadQueryFont(dpy, DEF_FONT);
-  if (title_font == NULL) {
-    fprintf(stderr, "XLoadQueryFont(): font '%s' not found", DEF_FONT);
-    exit(EXIT_FAILURE);
+  
+  xft_color.color.red = 0; //65535
+  xft_color.color.green = 0;
+  xft_color.color.blue = 0;
+  xft_color.color.alpha = 65535;
+  xft_color.pixel = 0;
+ 					  
+  xft_font = XftFontOpenName(dpy, DefaultScreen(dpy), "Arial-10:medium");
+  if (xft_font == NULL)
+  {
+  	printf("font '%s' not found", "Arial-10:medium");
+   	exit(EXIT_FAILURE);
   }
   
   XGCValues gcv;
   gcv.function = GXcopy;
-  gcv.font = title_font->fid;
   gcv.foreground = 0x000000;
-  text_gc = XCreateGC(dpy, root, GCFunction | GCForeground | GCFont, &gcv);
   
   gcv.foreground = create_color(FOCUSED_LIGHT_GREY).pixel;
   focused_light_grey_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
@@ -83,12 +76,11 @@ static void setup_display()
 
   XClearWindow(dpy, root);
 
-
-  pointer = XCreateFontCursor(dpy, XC_left_ptr);
+  pointerCursor = XCreateFontCursor(dpy, XC_left_ptr);
   resize_v = XCreateFontCursor(dpy, XC_sb_v_double_arrow);
   resize_h = XCreateFontCursor(dpy, XC_sb_h_double_arrow);
 
-  XDefineCursor(dpy, root, pointer);
+  XDefineCursor(dpy, root, pointerCursor);
 }
 
 void draw_close_button(Client *client, Rect initial_window)
@@ -133,10 +125,11 @@ void draw_window_titlebar(Client *client, Rect initial_window)
 	
   if (client->title != NULL) {
     int title_len = strlen(client->title);
-    int title_width = XTextWidth(title_font, client->title, title_len); 	
+	XGlyphInfo *extents = malloc(sizeof(XGlyphInfo));
+	XftTextExtents8(dpy, xft_font, (unsigned char *)client->title, title_len, extents);
+	int title_width = extents->width;
     int titlex = (initial_window.width / 2) - (title_width / 2);
-    XDrawString(dpy, client->frame, text_gc, titlex, 14, client->title, title_len);
-    // XftDrawString8(client->xftdraw, &xft_detail, xftfont, SPACE, SPACE + xftfont->ascent, (unsigned char *)client->title, strlen(client->title));
+    XftDrawString8(client->xft_draw, &xft_color, xft_font, titlex, 14, (unsigned char *)client->title, title_len);
 		
     if (client == focused_client) {
       int left_xend_light = titlex - 10;
@@ -276,7 +269,7 @@ void frame(Window root, Window win)
   client->client = win;
   client->frame = frame;
   client->close_button = close_button;
-  // client->xftdraw = XftDrawCreate(dpy, (Drawable) client->frame, DefaultVisual(dpy, DefaultScreen(dpy)), DefaultColormap(dpy, DefaultScreen(dpy)));
+  client->xft_draw = XftDrawCreate(dpy, (Drawable) client->frame, DefaultVisual(dpy, DefaultScreen(dpy)), DefaultColormap(dpy, DefaultScreen(dpy)));
 	 
   XFetchName(dpy, win, &client->title);
   ylist_ins_prev(&clients, ylist_head(&clients), client);
@@ -295,6 +288,7 @@ void unframe(Window win)
 #endif
   Client *client = find_client(win);
   if (client != NULL) {
+	XftDrawDestroy(client->xft_draw);
     XReparentWindow(dpy, client->client, root, 0, 0);
     XRemoveFromSaveSet(dpy, client->client);
 	
@@ -308,7 +302,6 @@ void quit()
   fprintf(stderr, "Quitting ywm...\n");
 	
   free_menu();
-  XFreeFont(dpy, title_font);
   XFreeGC(dpy, focused_light_grey_gc);
   XFreeGC(dpy, focused_dark_grey_gc);
   XFreeGC(dpy, unfocused_light_grey_gc);
@@ -317,9 +310,8 @@ void quit()
   XFreeGC(dpy, unfocused_frame_gc);
   XFreeGC(dpy, light_red_gc);
   XFreeGC(dpy, dark_red_gc);
-  XFreeGC(dpy, text_gc);
   XFreeGC(dpy, black_gc);
-  XFreeCursor(dpy, pointer);
+  XFreeCursor(dpy, pointerCursor);
   XFreeCursor(dpy, resize_v);
   XFreeCursor(dpy, resize_h);	
 

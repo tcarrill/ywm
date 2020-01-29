@@ -40,6 +40,7 @@ void write_default_menu_file() {
 
 void destroy_menuItem(void *data) {
   MenuItem *item = (MenuItem *)data;
+  XftDrawDestroy(item->xft_draw);
   free(item->label);
   free(item->command);
   free(item);
@@ -52,6 +53,8 @@ MenuItem* menuItem_new(char *label, char *command, Window win)
   menuItem->label = malloc(sizeof(char) * strlen(label));
   menuItem->command = malloc(sizeof(char) * strlen(command));
   menuItem->window = win;
+  menuItem->xft_draw = XftDrawCreate(dpy, (Drawable) win, DefaultVisual(dpy, DefaultScreen(dpy)), DefaultColormap(dpy, DefaultScreen(dpy)));
+  
   strncpy(menuItem->label, label, strlen(label) + 1);
   strncpy(menuItem->command, command, strlen(command));
   fprintf(stderr, "[%lu] %s, [%lu] %s\n", strlen(label), menuItem->label, strlen(command), menuItem->command);
@@ -122,7 +125,6 @@ Window create_menu()
                                            0, MENU_ITEM_HEIGHT * index + TITLE_BAR_HEIGHT, MENU_MAX_WIDTH, MENU_ITEM_HEIGHT, 0,
                                            BlackPixel(dpy, 0),
                                            bg.pixel);
-		
     XSelectInput(dpy, menu_item, ButtonMask | ExposureMask);
     MenuItem *menuItem = menuItem_new(label, command, menu_item);
     ylist_ins_next(&menu_items, ylist_head(&menu_items), menuItem);
@@ -179,7 +181,7 @@ static void draw_menu_item(MenuItem* menu_item, int flash) {
     XFillRectangle(dpy, menu_btn, focused_frame_gc, 2, 2, width - 3, height - 3);
   }
   if (strlen(menu_item->label) > 0) {
-    XDrawString(dpy, menu_btn, XDefaultGC(dpy, DefaultScreen(dpy)), 7, 15, menu_item->label, strlen(menu_item->label));
+      XftDrawString8(menu_item->xft_draw, &xft_color, xft_font, 7, 15, (unsigned char *)menu_item->label, strlen(menu_item->label));
   }	
 }
 

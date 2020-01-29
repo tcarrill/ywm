@@ -3,13 +3,15 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <X11/cursorfont.h>
-// #include <X11/Xft/Xft.h>
+#include <X11/Xft/Xft.h>
 #include "ylist.h"
 #include "client.h"
 #include "menu.h"
 
-#define DEF_FONT "-b&h-lucida-bold-r-*-*-11-*-*-*-*-*-*-*"
-// #define DEF_FONT "-bitstream-bitstream vera sans-medium-r-*-*-*-100-*-*-*-*-*-*"
+#ifdef SHAPE
+#include <X11/extensions/shape.h>
+#endif
+
 #define FRAME_TITLEBAR_HEIGHT 20
 #define FRAME_BORDER_WIDTH 4
 #define FRAME_CORNER_OFFSET 20
@@ -39,9 +41,6 @@ GC unfocused_dark_grey_gc;
 GC focused_frame_gc;
 GC unfocused_frame_gc;
 
-XFontStruct *title_font;
-GC text_gc;
-
 Display *dpy;
 Window root;
 Window root_menu;
@@ -49,8 +48,8 @@ Client *focused_client;
 
 int screen_w, screen_h;
 
-// XftFont *xftfont = NULL;
-// XftColor xft_detail;
+XftFont *xft_font;
+XftColor xft_color;
 
 enum AtomsWM {
   AtomWMDeleteWindow,
@@ -65,7 +64,7 @@ Point cursor_start_win_point;
 Rect start_window_geom;
 Rect current_window_geom;
 
-Cursor pointer;
+Cursor pointerCursor;
 Cursor resize_v;
 Cursor resize_h; 
 

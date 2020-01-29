@@ -1,16 +1,17 @@
 CC = cc
-LIBS = -L/usr/X11/lib -L/opt/X11/lib/pkgconfig/ -lX11 -lXext
-INCLUDES = -I/opt/X11/include/freetype2/ -arch x86_64 -I/opt/X11/include/
+LIBS = -L/usr/X11/lib -L/opt/X11/lib/ -lXft -lX11 -lXext
+INCLUDES = -I/opt/X11/include/freetype2/ -I/opt/X11/include/
 CFLAGS = -Wall
 OBJS = ywm.o menu.o event.o util.o ylist.o
 BIN = ywm
 BINDIR = /usr/local/bin
-#DEFINES += -DDEBUG
+DEFINES += -DSHAPE -DXFT
+DEFINES += -DDEBUG
 
 all: $(BIN)
 
 %.o: %.c 
-	$(CC) $(DEFINES) -c -o $@ $< $(CFLAGS) $(INCLUDES)
+	$(CC) $(DEFINES) -c -o $@ $^ $(CFLAGS) $(INCLUDES)
 
 $(BIN): $(OBJS)
 	$(CC) $(LIBS) -o $@ $(OBJS) $(INCLUDES)		

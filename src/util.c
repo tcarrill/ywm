@@ -190,7 +190,7 @@ void remove_client(Client* client) {
   XUngrabServer(dpy);
 }
 
-int snap_buffer = 25;
+int snap_buffer = 20;
 int resistance_threshold = 50;
 int snap_window_right(int x)
 {

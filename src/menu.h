@@ -21,6 +21,7 @@ typedef struct MenuItem {
   char *label;
   char *command;
   Window window;
+  XftDraw *xft_draw;
 } MenuItem;
 
 YList menu_items;
