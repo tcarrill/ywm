@@ -196,35 +196,39 @@ void redraw(Client *client)
   XDrawLine(dpy, client->frame, light_gc, 0, 0, width, 0);
   // left
   XDrawLine(dpy, client->frame, light_gc, 0, 1, 0, height - 1);
-  // right
-  XDrawLine(dpy, client->frame, light_gc, width - FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT, width - FRAME_BORDER_WIDTH, height - FRAME_BORDER_WIDTH);
-  // bottom
-  XDrawLine(dpy, client->frame, light_gc, FRAME_BORDER_WIDTH, height - FRAME_BORDER_WIDTH, width - FRAME_BORDER_WIDTH, height - FRAME_BORDER_WIDTH);  
-    
+  
   // dark border
   // top
-  XDrawLine(dpy, client->frame, dark_gc, FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT - 1, width - FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT - 1); 
-  // left
-  XDrawLine(dpy, client->frame, dark_gc, 3, FRAME_TITLEBAR_HEIGHT - 1, 3, height - FRAME_BORDER_WIDTH);
+  XDrawLine(dpy, client->frame, dark_gc, FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT - 1, width - FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT - 1);   
   // right
   XDrawLine(dpy, client->frame, dark_gc, width - 1, 1, width - 1, height); 
   // bottom
   XDrawLine(dpy, client->frame, dark_gc, 1, height - 1, width, height - 1);
   
-  // lower left corder
-  XDrawLine(dpy, client->frame, dark_gc, 0, height - FRAME_CORNER_OFFSET, FRAME_BORDER_WIDTH, height - FRAME_CORNER_OFFSET);
-  XDrawLine(dpy, client->frame, light_gc, 0, height - FRAME_CORNER_OFFSET + 1, FRAME_BORDER_WIDTH, height - FRAME_CORNER_OFFSET + 1);
-
-  XDrawLine(dpy, client->frame, dark_gc, FRAME_CORNER_OFFSET, height - FRAME_BORDER_WIDTH, FRAME_CORNER_OFFSET, height);
-  XDrawLine(dpy, client->frame, light_gc, FRAME_CORNER_OFFSET + 1, height - FRAME_BORDER_WIDTH, FRAME_CORNER_OFFSET + 1, height);
+  if (!client->shaded) {
+  	// light border right
+  	XDrawLine(dpy, client->frame, light_gc, width - FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT, width - FRAME_BORDER_WIDTH, height - FRAME_BORDER_WIDTH);
   
-  // lower right corner
-  XDrawLine(dpy, client->frame, dark_gc, width - FRAME_CORNER_OFFSET, height - FRAME_BORDER_WIDTH, width - FRAME_CORNER_OFFSET, height);
-  XDrawLine(dpy, client->frame, light_gc, width - FRAME_CORNER_OFFSET + 1, height - FRAME_BORDER_WIDTH, width - FRAME_CORNER_OFFSET + 1, height);
-  
-  XDrawLine(dpy, client->frame, dark_gc, width - FRAME_BORDER_WIDTH, height - FRAME_CORNER_OFFSET, width, height - FRAME_CORNER_OFFSET);  
-  XDrawLine(dpy, client->frame, light_gc, width - FRAME_BORDER_WIDTH, height - FRAME_CORNER_OFFSET + 1, width, height - FRAME_CORNER_OFFSET + 1);
+    // light border bottom
+    XDrawLine(dpy, client->frame, light_gc, FRAME_BORDER_WIDTH, height - FRAME_BORDER_WIDTH, width - FRAME_BORDER_WIDTH, height - FRAME_BORDER_WIDTH);  
 
+    // dark border left
+    XDrawLine(dpy, client->frame, dark_gc, 3, FRAME_TITLEBAR_HEIGHT - 1, 3, height - FRAME_BORDER_WIDTH);
+	  
+    // lower left corder
+    XDrawLine(dpy, client->frame, dark_gc, 0, height - FRAME_CORNER_OFFSET, FRAME_BORDER_WIDTH, height - FRAME_CORNER_OFFSET);
+    XDrawLine(dpy, client->frame, light_gc, 0, height - FRAME_CORNER_OFFSET + 1, FRAME_BORDER_WIDTH, height - FRAME_CORNER_OFFSET + 1);
+
+    XDrawLine(dpy, client->frame, dark_gc, FRAME_CORNER_OFFSET, height - FRAME_BORDER_WIDTH, FRAME_CORNER_OFFSET, height);
+    XDrawLine(dpy, client->frame, light_gc, FRAME_CORNER_OFFSET + 1, height - FRAME_BORDER_WIDTH, FRAME_CORNER_OFFSET + 1, height);
+  
+    // lower right corner
+    XDrawLine(dpy, client->frame, dark_gc, width - FRAME_CORNER_OFFSET, height - FRAME_BORDER_WIDTH, width - FRAME_CORNER_OFFSET, height);
+    XDrawLine(dpy, client->frame, light_gc, width - FRAME_CORNER_OFFSET + 1, height - FRAME_BORDER_WIDTH, width - FRAME_CORNER_OFFSET + 1, height);
+  
+    XDrawLine(dpy, client->frame, dark_gc, width - FRAME_BORDER_WIDTH, height - FRAME_CORNER_OFFSET, width, height - FRAME_CORNER_OFFSET);  
+    XDrawLine(dpy, client->frame, light_gc, width - FRAME_BORDER_WIDTH, height - FRAME_CORNER_OFFSET + 1, width, height - FRAME_CORNER_OFFSET + 1);
+  }
   Rect initial_window = { .x = x, .y = y, .width = width, .height = height};
   draw_window_titlebar(client, initial_window);
   draw_close_button(client, initial_window);
@@ -266,6 +270,7 @@ void frame(Window root, Window win)
   XReparentWindow(dpy, win, frame, 4, 20);  // Offset of client window within frame.
 	 	
   Client *client = (Client *)malloc(sizeof *client);
+  client->shaded = 0;
   client->client = win;
   client->frame = frame;
   client->close_button = close_button;

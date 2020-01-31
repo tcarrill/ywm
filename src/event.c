@@ -58,7 +58,53 @@ void on_button_press(const XButtonEvent *ev)
     prev_mouse_xy = (Point){ .x = ev->x_root, .y = ev->y_root };
     start_window_geom = (Rect){ .x = x, .y = y, .width = width, .height = height };
     current_window_geom = (Rect){ .x = x, .y = y, .width = width, .height = height };
-
+	
+	if (is_title_bar(cursor_start_win_point)) {
+		if (click1_time == 0) {
+			click1_time = ev->time;
+			click2_time = 0;
+		} else if (click2_time == 0) {
+			click2_time = ev->time;
+			long diff = click2_time - click1_time;
+			
+			if (diff <= DBL_CLICK_SPEED) {
+				fprintf(stderr, "Double Click!\n");
+				Client *client = find_client(ev->window);
+			    XWindowAttributes client_attr;
+			    XGetWindowAttributes(dpy, client->client, &client_attr);
+				
+		        if (client_attr.map_state == IsUnmapped) {
+  				  client->shaded = 0;
+				  
+			      int x, y;
+			      unsigned width, height, border_width, depth;
+			      XGetGeometry(
+			                   dpy,
+			                   client->client,
+			                   &returned_root,
+			                   &x, &y,
+			                   &width, &height,
+			                   &border_width,
+			                   &depth);
+			
+				  XRaiseWindow(dpy, client->client);
+				  XResizeWindow(dpy, client->frame, width + 10, height + 26);
+		          XMapWindow(dpy, client->client);
+		        } else {
+  				  client->shaded = 1;
+		          XUnmapWindow(dpy, client->client);
+				  XResizeWindow(dpy, client->frame, width, 20);
+		        }
+			}
+			
+			click1_time = 0;
+			click2_time = 0;
+		}
+	} else {
+		click1_time = 0;
+		click2_time = 0;
+	}
+		
     XGrabPointer(dpy, 
                  ev->window, 
                  True,
@@ -70,7 +116,7 @@ void on_button_press(const XButtonEvent *ev)
                  CurrentTime);
 
     XRaiseWindow(dpy, ev->window);
-    focused_client = find_client(ev->window);
+ 	focused_client = find_client(ev->window);
 		
     YNode *curr = ylist_head(&clients);
     while (curr != NULL) {
@@ -121,7 +167,7 @@ void on_motion_notify(const XMotionEvent *ev)
     }
 		
     XMoveWindow(dpy, ev->window, x, y);
-  } else { // resize motion        
+  } else if (!c->shaded) { // resize motion          
     if (is_lower_right_corner(cursor_start_win_point)) {
       int xdiff = ev->x_root - cursor_start_point.x;
       int ydiff = ev->y_root - cursor_start_point.y;
@@ -153,6 +199,8 @@ void on_motion_notify(const XMotionEvent *ev)
 
   current_window_geom = (Rect){ .x = x, .y = y, .width = width, .height = height };
   prev_mouse_xy = (Point){ .x = ev->x_root, .y = ev->y_root };
+  click1_time = 0;
+  click2_time = 0;
 }
 
 void on_expose(const XExposeEvent *ev)

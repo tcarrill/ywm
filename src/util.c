@@ -190,7 +190,7 @@ void remove_client(Client* client) {
   XUngrabServer(dpy);
 }
 
-int snap_buffer = 20;
+int snap_buffer = 10;
 int resistance_threshold = 50;
 int snap_window_right(int x)
 {
@@ -214,6 +214,11 @@ int snap_window_bottom(int y)
 {
   int y_distance = y + start_window_geom.height + snap_buffer;
   return y_distance >= screen_h && y_distance <= screen_h + resistance_threshold;
+}
+
+int is_title_bar(Point p) 
+{
+	return p.x >= 19 && p.x <= start_window_geom.width - 7 && p.y > 0 && p.y <= FRAME_TITLEBAR_HEIGHT;
 }
 
 int is_left_frame(int x) 

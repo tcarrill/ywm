@@ -6,6 +6,8 @@ Ywm is a stacking window manager for X11.  Its UI takes inspiration from Apple's
 ## Usage
 Right mouse button anywhere but a window will show the root menu.
 
+Double clicking the title bar will shade/unshade the window.
+
 ## Root Menu
 The root menu is controlled by the ~/.ywm/ywm.menu.  This is a pipe (|) delimited file in the form of "label|command".  The default file is shown below
 
