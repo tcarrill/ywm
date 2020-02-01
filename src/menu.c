@@ -187,6 +187,7 @@ static void draw_menu_item(MenuItem* menu_item, int flash) {
     XFillRectangle(dpy, menu_btn, focused_frame_gc, 2, 2, width - 3, height - 3);
   }
   if (strlen(menu_item->label) > 0) {
+	  xft_color.color.alpha = 65535;
       XftDrawString8(menu_item->xft_draw, &xft_color, menu_xft_font, 7, 15, (unsigned char *)menu_item->label, strlen(menu_item->label));
   }	
 }
