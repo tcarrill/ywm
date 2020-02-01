@@ -38,11 +38,11 @@ static void setup_display()
   xft_color.color.blue = 0;
   xft_color.color.alpha = 65535;
   xft_color.pixel = 0;
- 					  
-  xft_font = XftFontOpenName(dpy, DefaultScreen(dpy), "Arial-10:medium");
-  if (xft_font == NULL)
+
+  title_xft_font = XftFontOpenName(dpy, DefaultScreen(dpy), "Arial-10:bold");
+  if (title_xft_font == NULL)
   {
-  	printf("font '%s' not found", "Arial-10:medium");
+  	printf("font '%s' not found", "Arial-10:bold");
    	exit(EXIT_FAILURE);
   }
   
@@ -126,12 +126,12 @@ void draw_window_titlebar(Client *client, Rect initial_window)
   if (client->title != NULL) {
     int title_len = strlen(client->title);
 	XGlyphInfo *extents = malloc(sizeof(XGlyphInfo));
-	XftTextExtents8(dpy, xft_font, (unsigned char *)client->title, title_len, extents);
+	XftTextExtents8(dpy, title_xft_font, (unsigned char *)client->title, title_len, extents);
 	int title_width = extents->width;
     int titlex = (initial_window.width / 2) - (title_width / 2);
-    XftDrawString8(client->xft_draw, &xft_color, xft_font, titlex, 14, (unsigned char *)client->title, title_len);
 		
     if (client == focused_client) {
+		xft_color.color.alpha = 65535;
       int left_xend_light = titlex - 10;
       int right_xstart_light = titlex + title_width + 7;
       int right_xend_light = initial_window.width - 7;
@@ -150,7 +150,11 @@ void draw_window_titlebar(Client *client, Rect initial_window)
           XDrawLine(dpy, client->frame, dark_gc, right_xstart_dark, y, right_xend_dark, y);
         }
       }
+    } else {
+		xft_color.color.alpha = 32768;
     }
+	
+    XftDrawString8(client->xft_draw, &xft_color, title_xft_font, titlex, 14, (unsigned char *)client->title, title_len);
   } else {
     int xend_light = initial_window.width - 5;
     int xend_dark = xend_light + 1;
@@ -191,18 +195,17 @@ void redraw(Client *client)
     dark_gc = unfocused_dark_grey_gc;
   }
   XClearWindow(dpy, client->frame);
-  // light border
-  // top
+
+  // light border top
   XDrawLine(dpy, client->frame, light_gc, 0, 0, width, 0);
-  // left
+  // light border left
   XDrawLine(dpy, client->frame, light_gc, 0, 1, 0, height - 1);
   
-  // dark border
-  // top
+  // dark border top
   XDrawLine(dpy, client->frame, dark_gc, FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT - 1, width - FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT - 1);   
-  // right
+  // dark border right
   XDrawLine(dpy, client->frame, dark_gc, width - 1, 1, width - 1, height); 
-  // bottom
+  // dark border bottom
   XDrawLine(dpy, client->frame, dark_gc, 1, height - 1, width, height - 1);
   
   if (!client->shaded) {

@@ -68,33 +68,31 @@ void on_button_press(const XButtonEvent *ev)
 			long diff = click2_time - click1_time;
 			
 			if (diff <= DBL_CLICK_SPEED) {
-				fprintf(stderr, "Double Click!\n");
 				Client *client = find_client(ev->window);
-			    XWindowAttributes client_attr;
-			    XGetWindowAttributes(dpy, client->client, &client_attr);
+				XWindowAttributes client_attr;
+				XGetWindowAttributes(dpy, client->client, &client_attr);
 				
-		        if (client_attr.map_state == IsUnmapped) {
-  				  client->shaded = 0;
-				  
-			      int x, y;
-			      unsigned width, height, border_width, depth;
-			      XGetGeometry(
-			                   dpy,
-			                   client->client,
-			                   &returned_root,
-			                   &x, &y,
-			                   &width, &height,
-			                   &border_width,
-			                   &depth);
+				if (client_attr.map_state == IsUnmapped) { client->shaded = 0;
+					
+					int x, y;
+					unsigned width, height, border_width, depth;
+					XGetGeometry(
+						dpy,
+						client->client,
+						&returned_root,
+						&x, &y,
+						&width, &height,
+						&border_width,
+						&depth);
 			
-				  XRaiseWindow(dpy, client->client);
-				  XResizeWindow(dpy, client->frame, width + 10, height + 26);
-		          XMapWindow(dpy, client->client);
-		        } else {
-  				  client->shaded = 1;
-		          XUnmapWindow(dpy, client->client);
-				  XResizeWindow(dpy, client->frame, width, 20);
-		        }
+					XRaiseWindow(dpy, client->client);
+					XResizeWindow(dpy, client->frame, width + 10, height + 26);
+					XMapWindow(dpy, client->client);
+				} else {
+					client->shaded = 1;
+					XUnmapWindow(dpy, client->client);
+					XResizeWindow(dpy, client->frame, width, 20);
+				}
 			}
 			
 			click1_time = 0;

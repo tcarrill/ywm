@@ -48,7 +48,7 @@ Client *focused_client;
 
 int screen_w, screen_h;
 
-XftFont *xft_font;
+XftFont *title_xft_font;
 XftColor xft_color;
 
 enum AtomsWM {

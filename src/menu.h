@@ -24,6 +24,8 @@ typedef struct MenuItem {
   XftDraw *xft_draw;
 } MenuItem;
 
+
+XftFont *menu_xft_font;
 YList menu_items;
 
 Window create_menu();
