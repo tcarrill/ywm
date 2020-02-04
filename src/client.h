@@ -18,7 +18,10 @@ typedef struct {
   Window client;
   Window frame;
   XftDraw *xft_draw;
-  int shaded;
+  Bool shaded;
+  Bool shaped;
+  int width, height;
+  int x, y;
 } Client;
 
 #endif

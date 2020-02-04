@@ -71,6 +71,10 @@ Cursor resize_h;
 YList clients;
 YList focus_stack;
 
+Bool shape;
+int shape_event;
+
+void set_shape(Client *);
 void frame(Window root, Window win);
 void unframe(Window win);
 void redraw(Client *client);

@@ -158,16 +158,6 @@ void draw_menu_title() {
   XDrawLine(dpy, root_menu, focused_dark_grey_gc, width - 1, 1, width - 1, height - 1);
   XDrawLine(dpy, root_menu, XDefaultGC(dpy, DefaultScreen(dpy)), width, 0, width, height);
   XDrawLine(dpy, root_menu, XDefaultGC(dpy, DefaultScreen(dpy)), 0, height, width, height);
-/*  
-  for (int i = 0; i < 12; i++) {
-    int y = 5 + i;
-    if (i % 2 == 0) {
-      XDrawLine(dpy, root_menu, menu_light_strip_gc, 5, y, MENU_MAX_WIDTH - 8, y);
-    } else {
-      XDrawLine(dpy, root_menu, menu_dark_strip_gc, 6, y, MENU_MAX_WIDTH - 7, y);
-    }
-  }
-*/	
 }
 
 static void draw_menu_item(MenuItem* menu_item, int flash) {

@@ -33,7 +33,7 @@ static void setup_display()
   XColor backgroundColor = create_color("#666797");
   XSetWindowBackground(dpy, root, backgroundColor.pixel);
   
-  xft_color.color.red = 0; //65535
+  xft_color.color.red = 0;
   xft_color.color.green = 0;
   xft_color.color.blue = 0;
   xft_color.color.alpha = 65535;
@@ -79,6 +79,9 @@ static void setup_display()
   pointerCursor = XCreateFontCursor(dpy, XC_left_ptr);
   resize_v = XCreateFontCursor(dpy, XC_sb_v_double_arrow);
   resize_h = XCreateFontCursor(dpy, XC_sb_h_double_arrow);
+
+  int dummy;
+  shape = XShapeQueryExtension(dpy, &shape_event, &dummy);
 
   XDefineCursor(dpy, root, pointerCursor);
 }
@@ -131,7 +134,7 @@ void draw_window_titlebar(Client *client, Rect initial_window)
     int titlex = (initial_window.width / 2) - (title_width / 2);
 		
     if (client == focused_client) {
-		xft_color.color.alpha = 65535;
+	  xft_color.color.alpha = 65535;
       int left_xend_light = titlex - 10;
       int right_xstart_light = titlex + title_width + 7;
       int right_xend_light = initial_window.width - 7;
@@ -166,7 +169,12 @@ void draw_window_titlebar(Client *client, Rect initial_window)
       } else {
         XDrawLine(dpy, client->frame, dark_gc, left_xstart_dark, y, xend_dark, y);
       }
-    }	
+    }
+  }
+  
+  if (client->shaped) {
+	  XDrawLine(dpy, client->frame, black_gc, 0, FRAME_TITLEBAR_HEIGHT, client->width + FRAME_BORDER_WIDTH + 6, FRAME_TITLEBAR_HEIGHT);
+	  XDrawLine(dpy, client->frame, dark_gc, 1, FRAME_TITLEBAR_HEIGHT - 1, client->width + FRAME_BORDER_WIDTH + 5, FRAME_TITLEBAR_HEIGHT - 1);
   }
 }
 
@@ -218,7 +226,7 @@ void redraw(Client *client)
     // dark border left
     XDrawLine(dpy, client->frame, dark_gc, 3, FRAME_TITLEBAR_HEIGHT - 1, 3, height - FRAME_BORDER_WIDTH);
 	  
-    // lower left corder
+    // lower left corner
     XDrawLine(dpy, client->frame, dark_gc, 0, height - FRAME_CORNER_OFFSET, FRAME_BORDER_WIDTH, height - FRAME_CORNER_OFFSET);
     XDrawLine(dpy, client->frame, light_gc, 0, height - FRAME_CORNER_OFFSET + 1, FRAME_BORDER_WIDTH, height - FRAME_CORNER_OFFSET + 1);
 
@@ -259,7 +267,7 @@ void frame(Window root, Window win)
                                      attrs.height + 26,
                                      1,
                                      0x000000,
-                                     0xaaaaaa);
+                                     0x00FF00);
 		
   Window close_button = create_titlebar_button(frame, attrs.x + 3, attrs.y + 4, 13, 13);
 			
@@ -269,15 +277,24 @@ void frame(Window root, Window win)
                SubstructureRedirectMask | SubstructureNotifyMask | ButtonMask | ExposureMask | EnterWindowMask);
 		 
   XAddToSaveSet(dpy, win);
-
   XReparentWindow(dpy, win, frame, 4, 20);  // Offset of client window within frame.
 	 	
   Client *client = (Client *)malloc(sizeof *client);
+  client->x = attrs.x;
+  client->y = attrs.y;
+  client->width = attrs.width;
+  client->height = attrs.height;
   client->shaded = 0;
+  client->shaped = 0;
   client->client = win;
   client->frame = frame;
   client->close_button = close_button;
   client->xft_draw = XftDrawCreate(dpy, (Drawable) client->frame, DefaultVisual(dpy, DefaultScreen(dpy)), DefaultColormap(dpy, DefaultScreen(dpy)));
+	 
+  if (shape) {
+	XShapeSelectInput(dpy, client->client, ShapeNotifyMask);
+	set_shape(client);
+  }
 	 
   XFetchName(dpy, win, &client->title);
   ylist_ins_prev(&clients, ylist_head(&clients), client);
@@ -360,6 +377,14 @@ void signal_handler(int signal)
     }
 }
 
+static void handle_shape_change(XShapeEvent *e)
+{
+	Client *c = find_client(e->window);
+	if (c != NULL) {
+		set_shape(c);
+	}
+}
+
 int main(int argc, char *argv[])
 {
 #ifdef DEBUG
@@ -436,6 +461,35 @@ int main(int argc, char *argv[])
     case LeaveNotify:
       on_leave_notify(&ev.xcrossing);
       break;
+	default:
+		if (shape && ev.type == shape_event) {
+			handle_shape_change((XShapeEvent *)&ev);
+		}
     }
   }
+}
+
+void set_shape(Client *c)
+{
+	int n, order;
+	XRectangle bounding, *temp;
+	int frame_border_width = FRAME_BORDER_WIDTH + 1;
+	int frame_titlebar_height = FRAME_TITLEBAR_HEIGHT + 1;
+	temp = XShapeGetRectangles(dpy, c->client, ShapeBounding, &n, &order);
+	if (n > 1) {
+		XShapeCombineShape(dpy, c->frame, ShapeBounding, frame_border_width, frame_titlebar_height, c->client, ShapeBounding, ShapeSet);
+		bounding.x = -frame_border_width;
+		bounding.y = -frame_border_width;
+		bounding.width = c->width + (2 * frame_border_width) + 6;
+		bounding.height = frame_titlebar_height + frame_border_width;
+		XShapeCombineRectangles(dpy, c->frame, ShapeBounding, 0, 0, &bounding, 1, ShapeUnion, YXBanded);
+		c->shaped = 1;
+	} else if (c->shaped) {
+		bounding.x = 0;
+		bounding.y = -FRAME_BORDER_WIDTH - 1;
+		bounding.width = c->width + (2 * FRAME_BORDER_WIDTH) - 1;
+		bounding.height = c->height + FRAME_TITLEBAR_HEIGHT + FRAME_BORDER_WIDTH;
+		XShapeCombineRectangles(dpy, c->frame, ShapeBounding, 0, 0, &bounding, 1, ShapeSet, YXBanded);
+	}
+	XFree(temp);
 }

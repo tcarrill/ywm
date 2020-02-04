@@ -72,7 +72,8 @@ void on_button_press(const XButtonEvent *ev)
 				XWindowAttributes client_attr;
 				XGetWindowAttributes(dpy, client->client, &client_attr);
 				
-				if (client_attr.map_state == IsUnmapped) { client->shaded = 0;
+				if (client_attr.map_state == IsUnmapped) { 
+					client->shaded = 0;
 					
 					int x, y;
 					unsigned width, height, border_width, depth;
@@ -87,6 +88,7 @@ void on_button_press(const XButtonEvent *ev)
 			
 					XRaiseWindow(dpy, client->client);
 					XResizeWindow(dpy, client->frame, width + 10, height + 26);
+					set_shape(client);
 					XMapWindow(dpy, client->client);
 				} else {
 					client->shaded = 1;
