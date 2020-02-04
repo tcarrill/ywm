@@ -88,7 +88,11 @@ void on_button_press(const XButtonEvent *ev)
 			
 					XRaiseWindow(dpy, client->client);
 					XResizeWindow(dpy, client->frame, width + 10, height + 26);
-					set_shape(client);
+					
+					if (client->shaped) {
+						set_shape(client);	
+					}
+					
 					XMapWindow(dpy, client->client);
 				} else {
 					client->shaded = 1;
