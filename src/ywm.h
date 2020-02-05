@@ -14,6 +14,10 @@
 
 #define FRAME_TITLEBAR_HEIGHT 20
 #define FRAME_BORDER_WIDTH 4
+#define X_BORDER_WIDTH 1
+#define TOTAL_FRAME_WIDTH ((2 * FRAME_BORDER_WIDTH) + (2 * X_BORDER_WIDTH))
+#define TOTAL_FRAME_HEIGHT (FRAME_TITLEBAR_HEIGHT + FRAME_BORDER_WIDTH + (2 * X_BORDER_WIDTH))
+
 #define FRAME_CORNER_OFFSET 20
 
 #define FOCUSED_FRAME_COLOR "#aaaaaa"
@@ -24,10 +28,6 @@
 #define UNFOCUSED_LIGHT_GREY "#eaeaea"
 #define UNFOCUSED_DARK_GREY "#767676"
 
-#define RED "#fc5b57"
-#define LIGHT_RED "#ed8887"
-#define DARK_RED "#c45554"
-#define BLUE "#0066cc"
 #define SPACE 3
 
 #define ButtonMask ButtonPressMask | ButtonReleaseMask
@@ -65,8 +65,6 @@ Rect start_window_geom;
 Rect current_window_geom;
 
 Cursor pointerCursor;
-Cursor resize_v;
-Cursor resize_h; 
 
 YList clients;
 YList focus_stack;
@@ -78,4 +76,7 @@ void set_shape(Client *);
 void frame(Window root, Window win);
 void unframe(Window win);
 void redraw(Client *client);
+void handle_shading(Client *);
+void shade(Client *);
+void unshade(Client *);
 #endif

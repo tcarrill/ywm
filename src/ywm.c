@@ -7,8 +7,6 @@
 #include "ywm.h"
 #include "event.h"
 	
-GC light_red_gc;
-GC dark_red_gc; 
 GC black_gc;
 
 static void setup_wm_hints() 
@@ -64,12 +62,6 @@ static void setup_display()
 
   gcv.foreground = create_color(FOCUSED_FRAME_COLOR).pixel;
   focused_frame_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
-
-  gcv.foreground = create_color(LIGHT_RED).pixel;
-  light_red_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
-
-  gcv.foreground = create_color(DARK_RED).pixel;
-  dark_red_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
   
   gcv.foreground = 0x000000;
   black_gc = XCreateGC(dpy, root, GCFunction | GCForeground, &gcv);
@@ -77,8 +69,6 @@ static void setup_display()
   XClearWindow(dpy, root);
 
   pointerCursor = XCreateFontCursor(dpy, XC_left_ptr);
-  resize_v = XCreateFontCursor(dpy, XC_sb_v_double_arrow);
-  resize_h = XCreateFontCursor(dpy, XC_sb_h_double_arrow);
 
   int dummy;
   shape = XShapeQueryExtension(dpy, &shape_event, &dummy);
@@ -89,17 +79,17 @@ static void setup_display()
 void draw_close_button(Client *client, Rect initial_window)
 {	
   if (client == focused_client) {
-    XSetWindowBackground(dpy, client->close_button, create_color(RED).pixel);
+    XSetWindowBackground(dpy, client->close_button, create_color(FOCUSED_FRAME_COLOR).pixel);
     XClearWindow(dpy, client->close_button);
     XDrawLine(dpy, client->close_button, focused_dark_grey_gc, 0, 0, 12, 0);
     XDrawLine(dpy, client->close_button, focused_dark_grey_gc, 0, 0, 0, 12);
     XDrawLine(dpy, client->close_button, focused_light_grey_gc, 0, 12, 12, 12);
     XDrawLine(dpy, client->close_button, focused_light_grey_gc, 12, 12, 12, 0);
 		
-    XDrawLine(dpy, client->close_button, light_red_gc, 2, 2, 10, 2);
-    XDrawLine(dpy, client->close_button, light_red_gc, 2, 2, 2, 10);
-    XDrawLine(dpy, client->close_button, dark_red_gc, 2, 10, 10, 10);
-    XDrawLine(dpy, client->close_button, dark_red_gc, 10, 2, 10, 10);
+    XDrawLine(dpy, client->close_button, focused_light_grey_gc, 2, 2, 10, 2);
+    XDrawLine(dpy, client->close_button, focused_light_grey_gc, 2, 2, 2, 10);
+    XDrawLine(dpy, client->close_button, focused_dark_grey_gc, 2, 10, 10, 10);
+    XDrawLine(dpy, client->close_button, focused_dark_grey_gc, 10, 2, 10, 10);
 		
     XDrawLine(dpy, client->close_button, black_gc, 1, 1, 11, 1);
     XDrawLine(dpy, client->close_button, black_gc, 1, 1, 1, 11);
@@ -108,6 +98,34 @@ void draw_close_button(Client *client, Rect initial_window)
   } else {
     XSetWindowBackground(dpy, client->close_button, create_color(UNFOCUSED_FRAME_COLOR).pixel);
     XClearWindow(dpy, client->close_button);
+  }
+}
+
+void draw_shade_button(Client *client, Rect initial_window)
+{	
+  if (client == focused_client) {
+    XSetWindowBackground(dpy, client->shade_button, create_color(FOCUSED_FRAME_COLOR).pixel);
+    XClearWindow(dpy, client->shade_button);
+    XDrawLine(dpy, client->shade_button, focused_dark_grey_gc, 0, 0, 12, 0);
+    XDrawLine(dpy, client->shade_button, focused_dark_grey_gc, 0, 0, 0, 12);
+    XDrawLine(dpy, client->shade_button, focused_light_grey_gc, 0, 12, 12, 12);
+    XDrawLine(dpy, client->shade_button, focused_light_grey_gc, 12, 12, 12, 0);
+		
+    XDrawLine(dpy, client->shade_button, focused_light_grey_gc, 2, 2, 10, 2);
+    XDrawLine(dpy, client->shade_button, focused_light_grey_gc, 2, 2, 2, 10);
+    XDrawLine(dpy, client->shade_button, focused_dark_grey_gc, 2, 10, 10, 10);
+    XDrawLine(dpy, client->shade_button, focused_dark_grey_gc, 10, 2, 10, 10);
+		
+    XDrawLine(dpy, client->shade_button, black_gc, 1, 1, 11, 1);
+    XDrawLine(dpy, client->shade_button, black_gc, 1, 1, 1, 11);
+    XDrawLine(dpy, client->shade_button, black_gc, 1, 11, 11, 11);
+    XDrawLine(dpy, client->shade_button, black_gc, 11, 11, 11, 1);
+	
+	XDrawLine(dpy, client->shade_button, black_gc, 1, 5, 11, 5);
+	XDrawLine(dpy, client->shade_button, black_gc, 1, 7, 11, 7);
+  } else {
+    XSetWindowBackground(dpy, client->shade_button, create_color(UNFOCUSED_FRAME_COLOR).pixel);
+    XClearWindow(dpy, client->shade_button);
   }
 }
 
@@ -137,7 +155,7 @@ void draw_window_titlebar(Client *client, Rect initial_window)
 	  xft_color.color.alpha = 65535;
       int left_xend_light = titlex - 10;
       int right_xstart_light = titlex + title_width + 7;
-      int right_xend_light = initial_window.width - 7;
+      int right_xend_light = initial_window.width - 23;
 
       int left_xend_dark = left_xend_light + 1;
       int right_xstart_dark = right_xstart_light + 1;
@@ -243,11 +261,29 @@ void redraw(Client *client)
   Rect initial_window = { .x = x, .y = y, .width = width, .height = height};
   draw_window_titlebar(client, initial_window);
   draw_close_button(client, initial_window);
+  draw_shade_button(client, initial_window);
 }
 
-Window create_titlebar_button(Window frame, int x, int y, int w, int h)
+Window create_titlebar_button(Window frame, int x, int y, int w, int h, int gravity)
 {
-  Window button = XCreateSimpleWindow(dpy, frame, x, y, w, h, 0, 0x000000, 0x000000);				
+  // Window button = XCreateSimpleWindow(dpy, frame, x, y, w, h, 0, 0x000000, 0x000000);
+	XSetWindowAttributes attrs;
+	attrs.background_pixel = 0x000000;
+	attrs.border_pixel = 0x000000;
+	attrs.win_gravity = gravity;
+	attrs.event_mask = ButtonPressMask;
+  Window button = XCreateWindow(dpy, 
+  	frame, 
+	x, 
+	y, 
+	w, 
+	h, 
+	0, 
+	CopyFromParent, 
+	InputOutput, 
+	CopyFromParent, 
+	CWBackPixel|CWBorderPixel|CWEventMask|CWWinGravity, 
+	&attrs);
   XSelectInput(dpy, button, ButtonMask);
 			   	
   return button;
@@ -263,13 +299,14 @@ void frame(Window root, Window win)
                                      root,
                                      attrs.x,
                                      attrs.y,
-                                     attrs.width + 10,
-                                     attrs.height + 26,
-                                     1,
+                                     attrs.width + TOTAL_FRAME_WIDTH,
+                                     attrs.height + TOTAL_FRAME_HEIGHT,
+                                     X_BORDER_WIDTH,
                                      0x000000,
                                      0x00FF00);
 		
-  Window close_button = create_titlebar_button(frame, attrs.x + 3, attrs.y + 4, 13, 13);
+  Window close_button = create_titlebar_button(frame, attrs.x + 3, attrs.y + 4, 13, 13, NorthWestGravity);
+  Window shade_button = create_titlebar_button(frame, attrs.width - 6, attrs.y + 4, 13, 13, NorthEastGravity);
 			
   XSelectInput(
                dpy,
@@ -277,7 +314,7 @@ void frame(Window root, Window win)
                SubstructureRedirectMask | SubstructureNotifyMask | ButtonMask | ExposureMask | EnterWindowMask);
 		 
   XAddToSaveSet(dpy, win);
-  XReparentWindow(dpy, win, frame, 4, 20);  // Offset of client window within frame.
+  XReparentWindow(dpy, win, frame, FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT);  // Offset of client window within frame.
 	 	
   Client *client = (Client *)malloc(sizeof *client);
   client->x = attrs.x;
@@ -289,6 +326,7 @@ void frame(Window root, Window win)
   client->client = win;
   client->frame = frame;
   client->close_button = close_button;
+  client->shade_button = shade_button;
   client->xft_draw = XftDrawCreate(dpy, (Drawable) client->frame, DefaultVisual(dpy, DefaultScreen(dpy)), DefaultColormap(dpy, DefaultScreen(dpy)));
 	 
   if (shape) {
@@ -304,6 +342,7 @@ void frame(Window root, Window win)
 #endif
   XMapWindow(dpy, frame);
   XMapWindow(dpy, close_button);
+  XMapWindow(dpy, shade_button);
 }
 
 void unframe(Window win) 
@@ -318,6 +357,7 @@ void unframe(Window win)
     XRemoveFromSaveSet(dpy, client->client);
 	
     XUnmapWindow(dpy, client->close_button);
+	XUnmapWindow(dpy, client->shade_button);
     XUnmapWindow(dpy, client->frame);
   }
 }
@@ -333,12 +373,8 @@ void quit()
   XFreeGC(dpy, unfocused_dark_grey_gc);
   XFreeGC(dpy, focused_frame_gc);
   XFreeGC(dpy, unfocused_frame_gc);
-  XFreeGC(dpy, light_red_gc);
-  XFreeGC(dpy, dark_red_gc);
   XFreeGC(dpy, black_gc);
   XFreeCursor(dpy, pointerCursor);
-  XFreeCursor(dpy, resize_v);
-  XFreeCursor(dpy, resize_h);	
 
   ylist_destroy(&clients);
   ylist_destroy(&focus_stack);
@@ -469,26 +505,77 @@ int main(int argc, char *argv[])
   }
 }
 
+void handle_shading(Client *client) 
+{
+	if (client->shaded) { 
+		unshade(client);
+	} else {
+		shade(client);
+	}
+}
+
+void shade(Client *client) 
+{
+    Window returned_root;
+    int x, y;
+    unsigned width, height, border_width, depth;
+    XGetGeometry(
+                 dpy,
+                 client->frame,
+                 &returned_root,
+                 &x, &y,
+                 &width, &height,
+                 &border_width,
+                 &depth);
+				 
+	client->shaded = 1;
+	XUnmapWindow(dpy, client->client);
+	XResizeWindow(dpy, client->frame, width, FRAME_TITLEBAR_HEIGHT);
+}
+
+void unshade(Client *client) 
+{
+    Window returned_root;
+    int x, y;
+    unsigned width, height, border_width, depth;
+    XGetGeometry(
+                 dpy,
+                 client->client,
+                 &returned_root,
+                 &x, &y,
+                 &width, &height,
+                 &border_width,
+                 &depth);
+				 
+	client->shaded = 0;
+	XRaiseWindow(dpy, client->client);
+	XResizeWindow(dpy, client->frame, width + TOTAL_FRAME_WIDTH, height + TOTAL_FRAME_HEIGHT);
+		
+	if (client->shaped) {
+		set_shape(client);	
+	}
+		
+	XMapWindow(dpy, client->client);
+}
+
 void set_shape(Client *c)
 {
 	int n, order;
 	XRectangle bounding, *temp;
-	int frame_border_width = FRAME_BORDER_WIDTH + 1;
-	int frame_titlebar_height = FRAME_TITLEBAR_HEIGHT + 1;
 	temp = XShapeGetRectangles(dpy, c->client, ShapeBounding, &n, &order);
 	if (n > 1) {
-		XShapeCombineShape(dpy, c->frame, ShapeBounding, frame_border_width, frame_titlebar_height, c->client, ShapeBounding, ShapeSet);
-		bounding.x = -frame_border_width;
-		bounding.y = -frame_border_width;
-		bounding.width = c->width + (2 * frame_border_width) + 6;
-		bounding.height = frame_titlebar_height + frame_border_width;
+		XShapeCombineShape(dpy, c->frame, ShapeBounding, FRAME_BORDER_WIDTH + 1, FRAME_TITLEBAR_HEIGHT + 1, c->client, ShapeBounding, ShapeSet);
+		bounding.x = -FRAME_BORDER_WIDTH - 1;
+		bounding.y = -FRAME_BORDER_WIDTH - 1;
+		bounding.width = c->width + TOTAL_FRAME_WIDTH + 6;
+		bounding.height = TOTAL_FRAME_HEIGHT;
 		XShapeCombineRectangles(dpy, c->frame, ShapeBounding, 0, 0, &bounding, 1, ShapeUnion, YXBanded);
 		c->shaped = 1;
 	} else if (c->shaped) {
-		bounding.x = 0;
+		bounding.x = -FRAME_BORDER_WIDTH - 1;
 		bounding.y = -FRAME_BORDER_WIDTH - 1;
-		bounding.width = c->width + (2 * FRAME_BORDER_WIDTH) - 1;
-		bounding.height = c->height + FRAME_TITLEBAR_HEIGHT + FRAME_BORDER_WIDTH;
+		bounding.width = c->width + TOTAL_FRAME_WIDTH + 6;
+		bounding.height = c->height + TOTAL_FRAME_HEIGHT;
 		XShapeCombineRectangles(dpy, c->frame, ShapeBounding, 0, 0, &bounding, 1, ShapeSet, YXBanded);
 	}
 	XFree(temp);

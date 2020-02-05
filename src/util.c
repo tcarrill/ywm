@@ -131,6 +131,8 @@ Client* find_client_by_type(Window win, int type)
       return client;
     } else if (type == CLOSE_BTN && client->close_button == win) {
       return client;
+    } else if (type == SHADE_BTN && client->shade_button == win) {
+      return client;
     }
 		
     curr = curr->next;
@@ -145,7 +147,7 @@ Client* find_client(Window win)
   while (curr != NULL) {
     client = (Client *)curr->data;		
 		
-    if (client->frame == win || client->client == win || client->close_button == win) {
+    if (client->frame == win || client->client == win || client->close_button == win || client->shade_button == win) {
       return client;
     }
 		
@@ -164,6 +166,7 @@ void remove_client(Client* client) {
     XRemoveFromSaveSet(dpy, client->client);
   }
 	
+  XDestroyWindow(dpy, client->shade_button);
   XDestroyWindow(dpy, client->close_button);
   XDestroyWindow(dpy, client->frame);
 	

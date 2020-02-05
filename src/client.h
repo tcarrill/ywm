@@ -15,6 +15,7 @@ typedef struct {
 typedef struct {
   char *title;
   Window close_button;
+  Window shade_button;
   Window client;
   Window frame;
   XftDraw *xft_draw;

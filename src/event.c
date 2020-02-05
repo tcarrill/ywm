@@ -69,36 +69,7 @@ void on_button_press(const XButtonEvent *ev)
 			
 			if (diff <= DBL_CLICK_SPEED) {
 				Client *client = find_client(ev->window);
-				XWindowAttributes client_attr;
-				XGetWindowAttributes(dpy, client->client, &client_attr);
-				
-				if (client_attr.map_state == IsUnmapped) { 
-					client->shaded = 0;
-					
-					int x, y;
-					unsigned width, height, border_width, depth;
-					XGetGeometry(
-						dpy,
-						client->client,
-						&returned_root,
-						&x, &y,
-						&width, &height,
-						&border_width,
-						&depth);
-			
-					XRaiseWindow(dpy, client->client);
-					XResizeWindow(dpy, client->frame, width + 10, height + 26);
-					
-					if (client->shaped) {
-						set_shape(client);	
-					}
-					
-					XMapWindow(dpy, client->client);
-				} else {
-					client->shaded = 1;
-					XUnmapWindow(dpy, client->client);
-					XResizeWindow(dpy, client->frame, width, 20);
-				}
+				handle_shading(client);
 			}
 			
 			click1_time = 0;
@@ -131,12 +102,17 @@ void on_button_press(const XButtonEvent *ev)
   }
 }
 
+// TODO: implement callbacks
 void on_button_release(const XButtonEvent *ev)
 {
-  Client *c = find_client_by_type(ev->window, CLOSE_BTN);
+  Client *c = find_client(ev->window);
   if (c != NULL) {
-    send_wm_delete(c->client);	
-    remove_client(c);
+	  if (ev->window == c->close_button) {
+    	send_wm_delete(c->client);	
+    	remove_client(c);
+	  } else if (ev->window == c->shade_button) {
+	   	handle_shading(c); 
+	  }
   }
 
   XUngrabPointer(dpy, CurrentTime);
@@ -178,7 +154,7 @@ void on_motion_notify(const XMotionEvent *ev)
       width = start_window_geom.width + xdiff;
       height = start_window_geom.height + ydiff;
       
-      XResizeWindow(dpy, c->frame, width + 10, height + 26);
+      XResizeWindow(dpy, c->frame, width + TOTAL_FRAME_WIDTH, height + TOTAL_FRAME_HEIGHT);
       XResizeWindow(dpy, c->client, width, height);  
     } else {
       int xdiff = ev->x_root - prev_mouse_xy.x;
@@ -197,7 +173,7 @@ void on_motion_notify(const XMotionEvent *ev)
       }
 
       XMoveResizeWindow(dpy, c->frame, x, y, width, height);
-      XMoveResizeWindow(dpy, c->client, FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT, width - 10, height - 26);
+      XMoveResizeWindow(dpy, c->client, FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT, width - TOTAL_FRAME_WIDTH, height - TOTAL_FRAME_HEIGHT);
     }
   }
 
@@ -250,14 +226,17 @@ void on_configure_request(const XConfigureRequestEvent *ev)
   changes.sibling = ev->above;
   changes.stack_mode = ev->detail;
   XConfigureWindow(dpy, ev->window, ev->value_mask, &changes);
-  //Client* c = find_client(ev->window);
-  //if (c != NULL) {
-  //  redraw(c);
-  //}
 }
 
 void on_configure_notify(const XConfigureEvent* ev)
 {
+	Client *c = find_client(ev->window);
+	if (c != NULL) {
+		c->x = ev->x;
+		c->y = ev->y;
+		c->width = ev->width;
+		c->height = ev->height;
+	}
 }
 
 void on_map_request(Window root, const XMapRequestEvent* ev)
@@ -271,32 +250,12 @@ void on_map_request(Window root, const XMapRequestEvent* ev)
 
 void on_unmap_notify(const XUnmapEvent* ev) 
 {
-  // printf("\ton_unmap_notify()\n");
-  // Client *c = find_client(ev->window);
-  // print_client(c);
-  // if (c != NULL) {
-  // 		remove_client(dpy, c);
-  // 	}
+
 }
 
 void on_enter_notify(const XCrossingEvent* ev)
 {
   focused_client = find_client(ev->window);
-  /*
-  if (ev->window != root) { 
-    if (is_left_frame(ev->x)) {
-      XDefineCursor(dpy, ev->window, resize_h);
-    } else if (is_right_frame(ev->x)) {
-      XDefineCursor(dpy, ev->window, resize_h);  
-    } else if (is_bottom_frame(ev->y)) {
-      XDefineCursor(dpy, ev->window, resize_v);
-    } else if (is_top_frame(ev->y)) {
-      XDefineCursor(dpy, ev->window, resize_v);
-    } else {
-      XDefineCursor(dpy, ev->window, pointer);
-    }
-  }
-  */
 	
   YNode *curr = ylist_head(&clients);
   while (curr != NULL) {
@@ -307,15 +266,5 @@ void on_enter_notify(const XCrossingEvent* ev)
 }
 void on_leave_notify(const XCrossingEvent* ev) 
 {
-/*
-  if (is_left_frame(ev->x)) {
-    XDefineCursor(dpy, ev->window, resize_h);
-  } else if (is_right_frame(ev->x)) {
-    XDefineCursor(dpy, ev->window, resize_h);  
-  } else if (is_bottom_frame(ev->y)) {
-    XDefineCursor(dpy, ev->window, resize_v);
-  } else if (is_top_frame(ev->y)) {
-    XDefineCursor(dpy, ev->window, resize_v);
-  }
-*/ 
+
 }
