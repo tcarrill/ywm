@@ -1,6 +1,7 @@
 #include <string.h>
 #include <X11/cursorfont.h>
 #include <X11/Xlib.h>
+#include <sys/wait.h>
 #include <signal.h>
 #include "menu.h"
 #include "util.h"

@@ -56,7 +56,7 @@ MenuItem* menuItem_new(char *label, char *command, Window win)
   menuItem->xft_draw = XftDrawCreate(dpy, (Drawable) win, DefaultVisual(dpy, DefaultScreen(dpy)), DefaultColormap(dpy, DefaultScreen(dpy)));
   
   strncpy(menuItem->label, label, strlen(label) + 1);
-  strncpy(menuItem->command, command, strlen(command));
+  strncpy(menuItem->command, command, strlen(command) + 1);
   fprintf(stderr, "[%lu] %s, [%lu] %s\n", strlen(label), menuItem->label, strlen(command), menuItem->command);
   return menuItem;
 }
