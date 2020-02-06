@@ -69,7 +69,9 @@ void on_button_press(const XButtonEvent *ev)
 			
 			if (diff <= DBL_CLICK_SPEED) {
 				Client *client = find_client(ev->window);
-				handle_shading(client);
+				if (client != NULL) {
+					handle_shading(client);
+				}
 			}
 			
 			click1_time = 0;
@@ -111,7 +113,7 @@ void on_button_release(const XButtonEvent *ev)
     	send_wm_delete(c->client);	
     	remove_client(c);
 	  } else if (ev->window == c->shade_button) {
-	   	handle_shading(c); 
+	   	handle_shading(c);
 	  }
   }
 
@@ -135,8 +137,8 @@ void on_motion_notify(const XMotionEvent *ev)
     y = start_window_geom.y + ydiff;
 		
     if (snap_window_right(x)) { 
-      x = screen_w - start_window_geom.width;		
-    } else if (snap_window_left(x)) {	
+      x = screen_w - start_window_geom.width;
+    } else if (snap_window_left(x)) {
       x = 0;
     } 
 		
@@ -153,9 +155,10 @@ void on_motion_notify(const XMotionEvent *ev)
       int ydiff = ev->y_root - cursor_start_point.y;
       width = start_window_geom.width + xdiff;
       height = start_window_geom.height + ydiff;
-      
-      XResizeWindow(dpy, c->frame, width + TOTAL_FRAME_WIDTH, height + TOTAL_FRAME_HEIGHT);
-      XResizeWindow(dpy, c->client, width, height);  
+      if (width > MIN_WIDTH && height > MIN_HEIGHT) {
+	      XResizeWindow(dpy, c->frame, width + TOTAL_FRAME_WIDTH, height + TOTAL_FRAME_HEIGHT);
+	      XResizeWindow(dpy, c->client, width, height);  
+      }
     } else {
       int xdiff = ev->x_root - prev_mouse_xy.x;
       int ydiff = ev->y_root - prev_mouse_xy.y;
@@ -172,8 +175,10 @@ void on_motion_notify(const XMotionEvent *ev)
         height = current_window_geom.height + ydiff;
       }
 
-      XMoveResizeWindow(dpy, c->frame, x, y, width, height);
-      XMoveResizeWindow(dpy, c->client, FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT, width - TOTAL_FRAME_WIDTH, height - TOTAL_FRAME_HEIGHT);
+	  if (width > MIN_WIDTH && height > MIN_HEIGHT) {
+      	XMoveResizeWindow(dpy, c->frame, x, y, width, height);
+      	XMoveResizeWindow(dpy, c->client, FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT, width - TOTAL_FRAME_WIDTH, height - TOTAL_FRAME_HEIGHT);
+  	  }
     }
   }
 

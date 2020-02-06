@@ -303,7 +303,7 @@ void frame(Window root, Window win)
                                      attrs.height + TOTAL_FRAME_HEIGHT,
                                      X_BORDER_WIDTH,
                                      0x000000,
-                                     0x00FF00);
+                                     0x000000);
 		
   Window close_button = create_titlebar_button(frame, attrs.x + 3, attrs.y + 4, 13, 13, NorthWestGravity);
   Window shade_button = create_titlebar_button(frame, attrs.width - 6, attrs.y + 4, 13, 13, NorthEastGravity);
