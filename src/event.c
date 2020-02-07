@@ -129,7 +129,7 @@ void on_motion_notify(const XMotionEvent *ev)
   int width = current_window_geom.width;
   int height = current_window_geom.height;
   
-  if (ev->state & Button1Mask && c->close_button != ev->window && !is_resize_frame(cursor_start_win_point)) {
+  if (ev->state & Button1Mask && c->close_button != ev->window && c->shade_button != ev->window && !is_resize_frame(cursor_start_win_point)) {
     int xdiff = ev->x_root - cursor_start_point.x;
     int ydiff = ev->y_root - cursor_start_point.y;
 
