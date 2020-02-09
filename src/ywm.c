@@ -294,7 +294,8 @@ void frame(Window root, Window win)
 {
   XWindowAttributes attrs;
   XGetWindowAttributes(dpy, win, &attrs);
-	
+fprintf(stderr, "override_redirect: %i\n", attrs.override_redirect);	
+  if (!attrs.override_redirect) {
   Window frame = XCreateSimpleWindow(
                                      dpy,
                                      root,
@@ -314,9 +315,9 @@ void frame(Window root, Window win)
                frame,
                SubstructureRedirectMask | SubstructureNotifyMask | ButtonMask | ExposureMask | EnterWindowMask);
 		 
-  XAddToSaveSet(dpy, win);
   XReparentWindow(dpy, win, frame, FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT);  // Offset of client window within frame.
-	 	
+  
+  XAddToSaveSet(dpy, win);
   Client *client = (Client *)malloc(sizeof *client);
   client->x = attrs.x;
   client->y = attrs.y;
@@ -344,6 +345,7 @@ void frame(Window root, Window win)
   XMapWindow(dpy, frame);
   XMapWindow(dpy, close_button);
   XMapWindow(dpy, shade_button);
+}
 }
 
 void unframe(Window win) 

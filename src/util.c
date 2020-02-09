@@ -257,7 +257,7 @@ int is_resize_frame(Point p)
 
 void print_client(Client* c)
 {
-  fprintf(stderr, "Client {\n\tclient = %#lx,\n\tframe = %#lx,\n\tclose_button = %#lx,\n}\n", c->client, c->frame, c->close_button);	
+  fprintf(stderr, "Client {\n\ttitle = %s,\n\tclient = %#lx,\n\tframe = %#lx,\n\tclose_button = %#lx,\n}\n", c->title, c->client, c->frame, c->close_button);	
 }
 
 int handle_xerror(Display *dpy, XErrorEvent *e)
@@ -281,6 +281,7 @@ int handle_xerror(Display *dpy, XErrorEvent *e)
 
 void print_event(XEvent ev) 
 {
+/*  
   fprintf(stderr, "Received event: %d ", ev.type);
   switch(ev.type) {
     case KeyPress: fprintf(stderr, "[KeyPress]\n"); break;
@@ -300,4 +301,5 @@ void print_event(XEvent ev)
     case EnterNotify: fprintf(stderr, "[EnterNotify]\n"); break;
     default: fprintf(stderr, "[Unknown event]\n"); break;
   }
+*/
 }
