@@ -8,7 +8,37 @@
 #include "ywm.h"
 #include "event.h"
 	
-GC black_gc;
+GC black_gc = NULL;
+GC focused_light_grey_gc = NULL;
+GC focused_dark_grey_gc = NULL;
+GC unfocused_light_grey_gc = NULL;
+GC unfocused_dark_grey_gc = NULL;
+GC focused_frame_gc = NULL;
+GC unfocused_frame_gc = NULL;
+
+Display *dpy = NULL;
+int screen_w = 0;
+int screen_h = 0;
+
+Window root = NULL;
+Window root_menu = NULL;
+Client *focused_client = NULL;
+
+XftFont *title_xft_font = NULL;
+XftColor xft_color;
+
+Point cursor_start_point;
+Point cursor_start_win_point;
+Rect start_window_geom;
+Rect current_window_geom;
+
+Cursor pointerCursor;
+YList clients;
+YList focus_stack;
+
+Atom atom_wm[NumberOfAtoms];
+Bool shape;
+int shape_event;
 
 static void setup_wm_hints() 
 {

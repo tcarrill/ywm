@@ -2,6 +2,8 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 Point prev_mouse_xy;
+Time click1_time;
+Time click2_time;
 
 void on_key_press(const XKeyEvent *ev) 
 {

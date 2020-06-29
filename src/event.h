@@ -10,8 +10,9 @@
 #include "util.h"
 
 #define DBL_CLICK_SPEED 350
-Time click1_time;
-Time click2_time;
+
+extern Time click1_time;
+extern Time click2_time;
 
 void on_key_press(const XKeyEvent* ev);
 void on_button_press(const XButtonEvent* ev);

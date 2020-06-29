@@ -1,7 +1,7 @@
 CC = cc
 LIBS = -L/usr/X11/lib -L/opt/X11/lib/ -lXft -lX11 -lXext
 INCLUDES = -I/usr/include/freetype2/ -I/opt/X11/include/
-CFLAGS = -Wall
+CFLAGS = -Wall 
 OBJS = ywm.o menu.o event.o util.o ylist.o
 BIN = ywm
 BINDIR = /usr/local/bin

@@ -35,24 +35,24 @@
 
 #define ButtonMask ButtonPressMask | ButtonReleaseMask
 
-GC focused_light_grey_gc;
-GC focused_dark_grey_gc;
+extern GC focused_light_grey_gc;
+extern GC focused_dark_grey_gc;
 
-GC unfocused_light_grey_gc;
-GC unfocused_dark_grey_gc;
+extern GC unfocused_light_grey_gc;
+extern GC unfocused_dark_grey_gc;
 
-GC focused_frame_gc;
-GC unfocused_frame_gc;
+extern GC focused_frame_gc;
+extern GC unfocused_frame_gc;
 
-Display *dpy;
-Window root;
-Window root_menu;
-Client *focused_client;
+extern Display *dpy;
+extern Window root;
+extern Window root_menu;
+extern Client *focused_client;
 
-int screen_w, screen_h;
+extern int screen_w, screen_h;
 
-XftFont *title_xft_font;
-XftColor xft_color;
+extern XftFont *title_xft_font;
+extern XftColor xft_color;
 
 enum AtomsWM {
   AtomWMDeleteWindow,
@@ -60,20 +60,20 @@ enum AtomsWM {
   NumberOfAtoms
 };
 
-Atom atom_wm[NumberOfAtoms];
+extern Atom atom_wm[NumberOfAtoms];
 
-Point cursor_start_point;
-Point cursor_start_win_point;
-Rect start_window_geom;
-Rect current_window_geom;
+extern Point cursor_start_point;
+extern Point cursor_start_win_point;
+extern Rect start_window_geom;
+extern Rect current_window_geom;
 
-Cursor pointerCursor;
+extern Cursor pointerCursor;
 
-YList clients;
-YList focus_stack;
+extern YList clients;
+extern YList focus_stack;
 
-Bool shape;
-int shape_event;
+extern Bool shape;
+extern int shape_event;
 
 void set_shape(Client *);
 void frame(Window root, Window win);
