@@ -20,8 +20,8 @@ Display *dpy = NULL;
 int screen_w = 0;
 int screen_h = 0;
 
-Window root = NULL;
-Window root_menu = NULL;
+Window root;
+Window root_menu;
 Client *focused_client = NULL;
 
 XftFont *title_xft_font = NULL;

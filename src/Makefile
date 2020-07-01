@@ -14,7 +14,7 @@ all: $(BIN)
 	$(CC) $(DEFINES) -c -o $@ $^ $(CFLAGS) $(INCLUDES)
 
 $(BIN): $(OBJS)
-	$(CC) $(LIBS) -o $@ $(OBJS) $(INCLUDES)		
+	$(CC) -o $@ $(OBJS) $(INCLUDES) $(LIBS)		
 
 clean:
 	rm -f $(BIN) $(OBJS)
