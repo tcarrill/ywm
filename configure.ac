@@ -1,14 +1,23 @@
 AC_INIT([ywm], [20201209], [Thomas Carrill])
-AM_INIT_AUTOMAKE([-Wall -Werror foreign])
-AC_CONFIG_HEADERS([config.h])
-AM_INIT_AUTOMAKE
-AC_CONFIG_FILES([
-  Makefile
-  src/Makefile
-])
+AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects dist-xz dist-bzip2])
+AC_CONFIG_SRCDIR([src/ywm.c])
 AC_PROG_CC
-AC_PATH_XTRA
-AS_IF([test "X$no_x" = "Xyes"],
-  [AC_MSG_ERROR([Could not find X11])])
+
+PKG_CHECK_MODULES([X11], [x11])
+PKG_CHECK_MODULES([XEXT], [xext])
+PKG_CHECK_MODULES([XFT], [xft])
+PKG_CHECK_MODULES([FREETYPE], [freetype2])
+
+AC_SUBST(X11_CFLAGS)
+AC_SUBST(X11_LIBS)
+AC_SUBST(XEXT_CFLAGS)
+AC_SUBST(XEXT_LIBS)
+AC_SUBST(XFT_CFLAGS)
+AC_SUBST(XFT_LIBS)
+AC_SUBST(FREETYPE_CFLAGS)
+AC_SUBST(FREETYPE_LIBS)
+
+AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_FILES([Makefile src/Makefile])
 AC_OUTPUT
 

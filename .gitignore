@@ -1,56 +1,33 @@
 ywm
 
-# Prerequisites
-*.d
-
-*.log
-
 # Object files
 *.o
-*.ko
-*.obj
-*.elf
-
-# Linker output
-*.ilk
-*.map
-*.exp
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Libraries
-*.lib
-*.a
-*.la
 *.lo
 
-# Shared objects (inc. Windows DLLs)
-*.dll
+# Libraries
+*.la
+*.a
 *.so
-*.so.*
 *.dylib
+*.dll
 
-# Executables
+# Binary files
 *.exe
 *.out
 *.app
-*.i*86
-*.x86_64
-*.hex
 
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
+# Autotools generated files
+autom4te.cache/
+config.status
+config.log
+configure
+Makefile.in
+Makefile
+*.in~
+*~
 
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
+# Backup files created by editors
+*~
+.*.swp
+.*.swo
+

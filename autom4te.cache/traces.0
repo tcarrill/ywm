@@ -1,18 +1,181 @@
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/amversion.m4:20: -1- AC_DEFUN([AM_AUTOMAKE_VERSION], [am__api_version='1.16'
+m4trace:/usr/share/aclocal/pkg.m4:58: -1- AC_DEFUN([PKG_PROG_PKG_CONFIG], [m4_pattern_forbid([^_?PKG_[A-Z_]+$])
+m4_pattern_allow([^PKG_CONFIG(_(PATH|LIBDIR|SYSROOT_DIR|ALLOW_SYSTEM_(CFLAGS|LIBS)))?$])
+m4_pattern_allow([^PKG_CONFIG_(DISABLE_UNINSTALLED|TOP_BUILD_DIR|DEBUG_SPEW)$])
+AC_ARG_VAR([PKG_CONFIG], [path to pkg-config utility])
+AC_ARG_VAR([PKG_CONFIG_PATH], [directories to add to pkg-config's search path])
+AC_ARG_VAR([PKG_CONFIG_LIBDIR], [path overriding pkg-config's built-in search path])
+
+if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
+	AC_PATH_TOOL([PKG_CONFIG], [pkg-config])
+fi
+if test -n "$PKG_CONFIG"; then
+	_pkg_min_version=m4_default([$1], [0.9.0])
+	AC_MSG_CHECKING([pkg-config is at least version $_pkg_min_version])
+	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
+		AC_MSG_RESULT([yes])
+	else
+		AC_MSG_RESULT([no])
+		PKG_CONFIG=""
+	fi
+fi[]dnl
+])
+m4trace:/usr/share/aclocal/pkg.m4:92: -1- AC_DEFUN([PKG_CHECK_EXISTS], [AC_REQUIRE([PKG_PROG_PKG_CONFIG])dnl
+if test -n "$PKG_CONFIG" && \
+    AC_RUN_LOG([$PKG_CONFIG --exists --print-errors "$1"]); then
+  m4_default([$2], [:])
+m4_ifvaln([$3], [else
+  $3])dnl
+fi])
+m4trace:/usr/share/aclocal/pkg.m4:121: -1- AC_DEFUN([_PKG_SHORT_ERRORS_SUPPORTED], [AC_REQUIRE([PKG_PROG_PKG_CONFIG])
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi[]dnl
+])
+m4trace:/usr/share/aclocal/pkg.m4:139: -1- AC_DEFUN([PKG_CHECK_MODULES], [AC_REQUIRE([PKG_PROG_PKG_CONFIG])dnl
+AC_ARG_VAR([$1][_CFLAGS], [C compiler flags for $1, overriding pkg-config])dnl
+AC_ARG_VAR([$1][_LIBS], [linker flags for $1, overriding pkg-config])dnl
+
+pkg_failed=no
+AC_MSG_CHECKING([for $2])
+
+_PKG_CONFIG([$1][_CFLAGS], [cflags], [$2])
+_PKG_CONFIG([$1][_LIBS], [libs], [$2])
+
+m4_define([_PKG_TEXT], [Alternatively, you may set the environment variables $1[]_CFLAGS
+and $1[]_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details.])
+
+if test $pkg_failed = yes; then
+        AC_MSG_RESULT([no])
+        _PKG_SHORT_ERRORS_SUPPORTED
+        if test $_pkg_short_errors_supported = yes; then
+                $1[]_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$2" 2>&1`
+        else
+                $1[]_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$2" 2>&1`
+        fi
+        # Put the nasty error message in config.log where it belongs
+        echo "$$1[]_PKG_ERRORS" >&AS_MESSAGE_LOG_FD
+
+        m4_default([$4], [AC_MSG_ERROR(
+[Package requirements ($2) were not met:
+
+$$1_PKG_ERRORS
+
+Consider adjusting the PKG_CONFIG_PATH environment variable if you
+installed software in a non-standard prefix.
+
+_PKG_TEXT])[]dnl
+        ])
+elif test $pkg_failed = untried; then
+        AC_MSG_RESULT([no])
+        m4_default([$4], [AC_MSG_FAILURE(
+[The pkg-config script could not be found or is too old.  Make sure it
+is in your PATH or set the PKG_CONFIG environment variable to the full
+path to pkg-config.
+
+_PKG_TEXT
+
+To get pkg-config, see <http://pkg-config.freedesktop.org/>.])[]dnl
+        ])
+else
+        $1[]_CFLAGS=$pkg_cv_[]$1[]_CFLAGS
+        $1[]_LIBS=$pkg_cv_[]$1[]_LIBS
+        AC_MSG_RESULT([yes])
+        $3
+fi[]dnl
+])
+m4trace:/usr/share/aclocal/pkg.m4:208: -1- AC_DEFUN([PKG_CHECK_MODULES_STATIC], [AC_REQUIRE([PKG_PROG_PKG_CONFIG])dnl
+_save_PKG_CONFIG=$PKG_CONFIG
+PKG_CONFIG="$PKG_CONFIG --static"
+PKG_CHECK_MODULES($@)
+PKG_CONFIG=$_save_PKG_CONFIG[]dnl
+])
+m4trace:/usr/share/aclocal/pkg.m4:226: -1- AC_DEFUN([PKG_INSTALLDIR], [m4_pushdef([pkg_default], [m4_default([$1], ['${libdir}/pkgconfig'])])
+m4_pushdef([pkg_description],
+    [pkg-config installation directory @<:@]pkg_default[@:>@])
+AC_ARG_WITH([pkgconfigdir],
+    [AS_HELP_STRING([--with-pkgconfigdir], pkg_description)],,
+    [with_pkgconfigdir=]pkg_default)
+AC_SUBST([pkgconfigdir], [$with_pkgconfigdir])
+m4_popdef([pkg_default])
+m4_popdef([pkg_description])
+])
+m4trace:/usr/share/aclocal/pkg.m4:248: -1- AC_DEFUN([PKG_NOARCH_INSTALLDIR], [m4_pushdef([pkg_default], [m4_default([$1], ['${datadir}/pkgconfig'])])
+m4_pushdef([pkg_description],
+    [pkg-config arch-independent installation directory @<:@]pkg_default[@:>@])
+AC_ARG_WITH([noarch-pkgconfigdir],
+    [AS_HELP_STRING([--with-noarch-pkgconfigdir], pkg_description)],,
+    [with_noarch_pkgconfigdir=]pkg_default)
+AC_SUBST([noarch_pkgconfigdir], [$with_noarch_pkgconfigdir])
+m4_popdef([pkg_default])
+m4_popdef([pkg_description])
+])
+m4trace:/usr/share/aclocal/pkg.m4:267: -1- AC_DEFUN([PKG_CHECK_VAR], [AC_REQUIRE([PKG_PROG_PKG_CONFIG])dnl
+AC_ARG_VAR([$1], [value of $3 for $2, overriding pkg-config])dnl
+
+_PKG_CONFIG([$1], [variable="][$3]["], [$2])
+AS_VAR_COPY([$1], [pkg_cv_][$1])
+
+AS_VAR_IF([$1], [""], [$5], [$4])dnl
+])
+m4trace:/usr/share/aclocal/pkg.m4:285: -1- AC_DEFUN([PKG_WITH_MODULES], [
+m4_pushdef([with_arg], m4_tolower([$1]))
+
+m4_pushdef([description],
+           [m4_default([$5], [build with ]with_arg[ support])])
+
+m4_pushdef([def_arg], [m4_default([$6], [auto])])
+m4_pushdef([def_action_if_found], [AS_TR_SH([with_]with_arg)=yes])
+m4_pushdef([def_action_if_not_found], [AS_TR_SH([with_]with_arg)=no])
+
+m4_case(def_arg,
+            [yes],[m4_pushdef([with_without], [--without-]with_arg)],
+            [m4_pushdef([with_without],[--with-]with_arg)])
+
+AC_ARG_WITH(with_arg,
+     AS_HELP_STRING(with_without, description[ @<:@default=]def_arg[@:>@]),,
+    [AS_TR_SH([with_]with_arg)=def_arg])
+
+AS_CASE([$AS_TR_SH([with_]with_arg)],
+            [yes],[PKG_CHECK_MODULES([$1],[$2],$3,$4)],
+            [auto],[PKG_CHECK_MODULES([$1],[$2],
+                                        [m4_n([def_action_if_found]) $3],
+                                        [m4_n([def_action_if_not_found]) $4])])
+
+m4_popdef([with_arg])
+m4_popdef([description])
+m4_popdef([def_arg])
+
+])
+m4trace:/usr/share/aclocal/pkg.m4:322: -1- AC_DEFUN([PKG_HAVE_WITH_MODULES], [
+PKG_WITH_MODULES([$1],[$2],,,[$3],[$4])
+
+AM_CONDITIONAL([HAVE_][$1],
+               [test "$AS_TR_SH([with_]m4_tolower([$1]))" = "yes"])
+])
+m4trace:/usr/share/aclocal/pkg.m4:337: -1- AC_DEFUN([PKG_HAVE_DEFINE_WITH_MODULES], [
+PKG_HAVE_WITH_MODULES([$1],[$2],[$3],[$4])
+
+AS_IF([test "$AS_TR_SH([with_]m4_tolower([$1]))" = "yes"],
+        [AC_DEFINE([HAVE_][$1], 1, [Enable ]m4_tolower([$1])[ support])])
+])
+m4trace:/usr/share/aclocal-1.16/amversion.m4:14: -1- AC_DEFUN([AM_AUTOMAKE_VERSION], [am__api_version='1.16'
 dnl Some users find AM_AUTOMAKE_VERSION and mistake it for a way to
 dnl require some minimum version.  Point them to the right macro.
-m4_if([$1], [1.16.3], [],
+m4_if([$1], [1.16.5], [],
       [AC_FATAL([Do not call $0, use AM_INIT_AUTOMAKE([$1]).])])dnl
 ])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/amversion.m4:37: -1- AC_DEFUN([AM_SET_CURRENT_AUTOMAKE_VERSION], [AM_AUTOMAKE_VERSION([1.16.3])dnl
+m4trace:/usr/share/aclocal-1.16/amversion.m4:33: -1- AC_DEFUN([AM_SET_CURRENT_AUTOMAKE_VERSION], [AM_AUTOMAKE_VERSION([1.16.5])dnl
 m4_ifndef([AC_AUTOCONF_VERSION],
   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
 _AM_AUTOCONF_VERSION(m4_defn([AC_AUTOCONF_VERSION]))])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/auxdir.m4:51: -1- AC_DEFUN([AM_AUX_DIR_EXPAND], [AC_REQUIRE([AC_CONFIG_AUX_DIR_DEFAULT])dnl
+m4trace:/usr/share/aclocal-1.16/auxdir.m4:47: -1- AC_DEFUN([AM_AUX_DIR_EXPAND], [AC_REQUIRE([AC_CONFIG_AUX_DIR_DEFAULT])dnl
 # Expand $ac_aux_dir to an absolute path.
 am_aux_dir=`cd "$ac_aux_dir" && pwd`
 ])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/cond.m4:32: -1- AC_DEFUN([AM_CONDITIONAL], [AC_PREREQ([2.52])dnl
+m4trace:/usr/share/aclocal-1.16/cond.m4:12: -1- AC_DEFUN([AM_CONDITIONAL], [AC_PREREQ([2.52])dnl
  m4_if([$1], [TRUE],  [AC_FATAL([$0: invalid condition: $1])],
        [$1], [FALSE], [AC_FATAL([$0: invalid condition: $1])])dnl
 AC_SUBST([$1_TRUE])dnl
@@ -32,7 +195,7 @@ AC_CONFIG_COMMANDS_PRE(
   AC_MSG_ERROR([[conditional "$1" was never defined.
 Usually this means the macro was only invoked conditionally.]])
 fi])])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/depend.m4:156: -1- AC_DEFUN([_AM_DEPENDENCIES], [AC_REQUIRE([AM_SET_DEPDIR])dnl
+m4trace:/usr/share/aclocal-1.16/depend.m4:26: -1- AC_DEFUN([_AM_DEPENDENCIES], [AC_REQUIRE([AM_SET_DEPDIR])dnl
 AC_REQUIRE([AM_OUTPUT_DEPENDENCY_COMMANDS])dnl
 AC_REQUIRE([AM_MAKE_INCLUDE])dnl
 AC_REQUIRE([AM_DEP_TRACK])dnl
@@ -162,10 +325,10 @@ AM_CONDITIONAL([am__fastdep$1], [
   test "x$enable_dependency_tracking" != xno \
   && test "$am_cv_$1_dependencies_compiler_type" = gcc3])
 ])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/depend.m4:166: -1- AC_DEFUN([AM_SET_DEPDIR], [AC_REQUIRE([AM_SET_LEADING_DOT])dnl
+m4trace:/usr/share/aclocal-1.16/depend.m4:163: -1- AC_DEFUN([AM_SET_DEPDIR], [AC_REQUIRE([AM_SET_LEADING_DOT])dnl
 AC_SUBST([DEPDIR], ["${am__leading_dot}deps"])dnl
 ])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/depend.m4:189: -1- AC_DEFUN([AM_DEP_TRACK], [AC_ARG_ENABLE([dependency-tracking], [dnl
+m4trace:/usr/share/aclocal-1.16/depend.m4:171: -1- AC_DEFUN([AM_DEP_TRACK], [AC_ARG_ENABLE([dependency-tracking], [dnl
 AS_HELP_STRING(
   [--enable-dependency-tracking],
   [do not reject slow dependency extractors])
@@ -183,7 +346,7 @@ _AM_SUBST_NOTMAKE([AMDEPBACKSLASH])dnl
 AC_SUBST([am__nodep])dnl
 _AM_SUBST_NOTMAKE([am__nodep])dnl
 ])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/depout.m4:54: -1- AC_DEFUN([_AM_OUTPUT_DEPENDENCY_COMMANDS], [{
+m4trace:/usr/share/aclocal-1.16/depout.m4:11: -1- AC_DEFUN([_AM_OUTPUT_DEPENDENCY_COMMANDS], [{
   # Older Autoconf quotes --file arguments for eval, but not when files
   # are listed without --file.  Let's play safe and only enable the eval
   # if we detect the quoting.
@@ -226,10 +389,14 @@ m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/depout.m4:54: -1- A
   rm -f conftest-deps.mk
 }
 ])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/depout.m4:67: -1- AC_DEFUN([AM_OUTPUT_DEPENDENCY_COMMANDS], [AC_CONFIG_COMMANDS([depfiles],
+m4trace:/usr/share/aclocal-1.16/depout.m4:64: -1- AC_DEFUN([AM_OUTPUT_DEPENDENCY_COMMANDS], [AC_CONFIG_COMMANDS([depfiles],
      [test x"$AMDEP_TRUE" != x"" || _AM_OUTPUT_DEPENDENCY_COMMANDS],
      [AMDEP_TRUE="$AMDEP_TRUE" MAKE="${MAKE-make}"])])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/init.m4:171: -1- AC_DEFUN([AM_INIT_AUTOMAKE], [AC_PREREQ([2.65])dnl
+m4trace:/usr/share/aclocal-1.16/init.m4:29: -1- AC_DEFUN([AM_INIT_AUTOMAKE], [AC_PREREQ([2.65])dnl
+m4_ifdef([_$0_ALREADY_INIT],
+  [m4_fatal([$0 expanded multiple times
+]m4_defn([_$0_ALREADY_INIT]))],
+  [m4_define([_$0_ALREADY_INIT], m4_expansion_stack)])dnl
 dnl Autoconf wants to disallow AM_ names.  We explicitly allow
 dnl the ones we care about.
 m4_pattern_allow([^AM_[A-Z]+FLAGS$])dnl
@@ -266,7 +433,7 @@ m4_ifval([$3], [_AM_SET_OPTION([no-define])])dnl
 [_AM_SET_OPTIONS([$1])dnl
 dnl Diagnose old-style AC_INIT with new-style AM_AUTOMAKE_INIT.
 m4_if(
-  m4_ifdef([AC_PACKAGE_NAME], [ok]):m4_ifdef([AC_PACKAGE_VERSION], [ok]),
+  m4_ifset([AC_PACKAGE_NAME], [ok]):m4_ifset([AC_PACKAGE_VERSION], [ok]),
   [ok:ok],,
   [m4_fatal([AC_INIT should be called with package and version arguments])])dnl
  AC_SUBST([PACKAGE], ['AC_PACKAGE_TARNAME'])dnl
@@ -318,6 +485,20 @@ AC_PROVIDE_IFELSE([AC_PROG_OBJCXX],
 		  [m4_define([AC_PROG_OBJCXX],
 			     m4_defn([AC_PROG_OBJCXX])[_AM_DEPENDENCIES([OBJCXX])])])dnl
 ])
+# Variables for tags utilities; see am/tags.am
+if test -z "$CTAGS"; then
+  CTAGS=ctags
+fi
+AC_SUBST([CTAGS])
+if test -z "$ETAGS"; then
+  ETAGS=etags
+fi
+AC_SUBST([ETAGS])
+if test -z "$CSCOPE"; then
+  CSCOPE=cscope
+fi
+AC_SUBST([CSCOPE])
+
 AC_REQUIRE([AM_SILENT_RULES])dnl
 dnl The testsuite driver may need to know about EXEEXT, so add the
 dnl 'am__EXEEXT' conditional if _AM_COMPILER_EXEEXT was seen.  This
@@ -371,7 +552,7 @@ dnl The trailing newline in this macro's definition is deliberate, for
 dnl backward compatibility and to allow trailing 'dnl'-style comments
 dnl after the AM_INIT_AUTOMAKE invocation. See automake bug#16841.
 ])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/init.m4:198: -1- AC_DEFUN([_AC_AM_CONFIG_HEADER_HOOK], [# Compute $1's index in $config_headers.
+m4trace:/usr/share/aclocal-1.16/init.m4:204: -1- AC_DEFUN([_AC_AM_CONFIG_HEADER_HOOK], [# Compute $1's index in $config_headers.
 _am_arg=$1
 _am_stamp_count=1
 for _am_header in $config_headers :; do
@@ -383,7 +564,7 @@ for _am_header in $config_headers :; do
   esac
 done
 echo "timestamp for $_am_arg" >`AS_DIRNAME(["$_am_arg"])`/stamp-h[]$_am_stamp_count])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/install-sh.m4:21: -1- AC_DEFUN([AM_PROG_INSTALL_SH], [AC_REQUIRE([AM_AUX_DIR_EXPAND])dnl
+m4trace:/usr/share/aclocal-1.16/install-sh.m4:11: -1- AC_DEFUN([AM_PROG_INSTALL_SH], [AC_REQUIRE([AM_AUX_DIR_EXPAND])dnl
 if test x"${install_sh+set}" != xset; then
   case $am_aux_dir in
   *\ * | *\	*)
@@ -393,7 +574,7 @@ if test x"${install_sh+set}" != xset; then
   esac
 fi
 AC_SUBST([install_sh])])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/lead-dot.m4:19: -1- AC_DEFUN([AM_SET_LEADING_DOT], [rm -rf .tst 2>/dev/null
+m4trace:/usr/share/aclocal-1.16/lead-dot.m4:10: -1- AC_DEFUN([AM_SET_LEADING_DOT], [rm -rf .tst 2>/dev/null
 mkdir .tst 2>/dev/null
 if test -d .tst; then
   am__leading_dot=.
@@ -402,7 +583,7 @@ else
 fi
 rmdir .tst 2>/dev/null
 AC_SUBST([am__leading_dot])])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/make.m4:41: -1- AC_DEFUN([AM_MAKE_INCLUDE], [AC_MSG_CHECKING([whether ${MAKE-make} supports the include directive])
+m4trace:/usr/share/aclocal-1.16/make.m4:13: -1- AC_DEFUN([AM_MAKE_INCLUDE], [AC_MSG_CHECKING([whether ${MAKE-make} supports the include directive])
 cat > confinc.mk << 'END'
 am__doit:
 	@echo this is the am__doit target >confinc.out
@@ -430,11 +611,11 @@ done
 rm -f confinc.* confmf.*
 AC_MSG_RESULT([${_am_result}])
 AC_SUBST([am__include])])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/make.m4:42: -1- m4_pattern_allow([^am__quote$])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/missing.m4:14: -1- AC_DEFUN([AM_MISSING_PROG], [AC_REQUIRE([AM_MISSING_HAS_RUN])
+m4trace:/usr/share/aclocal-1.16/make.m4:42: -1- m4_pattern_allow([^am__quote$])
+m4trace:/usr/share/aclocal-1.16/missing.m4:11: -1- AC_DEFUN([AM_MISSING_PROG], [AC_REQUIRE([AM_MISSING_HAS_RUN])
 $1=${$1-"${am_missing_run}$2"}
 AC_SUBST($1)])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/missing.m4:33: -1- AC_DEFUN([AM_MISSING_HAS_RUN], [AC_REQUIRE([AM_AUX_DIR_EXPAND])dnl
+m4trace:/usr/share/aclocal-1.16/missing.m4:20: -1- AC_DEFUN([AM_MISSING_HAS_RUN], [AC_REQUIRE([AM_AUX_DIR_EXPAND])dnl
 AC_REQUIRE_AUX_FILE([missing])dnl
 if test x"${MISSING+set}" != xset; then
   MISSING="\${SHELL} '$am_aux_dir/missing'"
@@ -447,11 +628,11 @@ else
   AC_MSG_WARN(['missing' script is too old or missing])
 fi
 ])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/options.m4:12: -1- AC_DEFUN([_AM_MANGLE_OPTION], [[_AM_OPTION_]m4_bpatsubst($1, [[^a-zA-Z0-9_]], [_])])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/options.m4:18: -1- AC_DEFUN([_AM_SET_OPTION], [m4_define(_AM_MANGLE_OPTION([$1]), [1])])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/options.m4:24: -1- AC_DEFUN([_AM_SET_OPTIONS], [m4_foreach_w([_AM_Option], [$1], [_AM_SET_OPTION(_AM_Option)])])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/options.m4:30: -1- AC_DEFUN([_AM_IF_OPTION], [m4_ifset(_AM_MANGLE_OPTION([$1]), [$2], [$3])])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/prog-cc-c-o.m4:44: -1- AC_DEFUN([_AM_PROG_CC_C_O], [AC_REQUIRE([AM_AUX_DIR_EXPAND])dnl
+m4trace:/usr/share/aclocal-1.16/options.m4:11: -1- AC_DEFUN([_AM_MANGLE_OPTION], [[_AM_OPTION_]m4_bpatsubst($1, [[^a-zA-Z0-9_]], [_])])
+m4trace:/usr/share/aclocal-1.16/options.m4:17: -1- AC_DEFUN([_AM_SET_OPTION], [m4_define(_AM_MANGLE_OPTION([$1]), [1])])
+m4trace:/usr/share/aclocal-1.16/options.m4:23: -1- AC_DEFUN([_AM_SET_OPTIONS], [m4_foreach_w([_AM_Option], [$1], [_AM_SET_OPTION(_AM_Option)])])
+m4trace:/usr/share/aclocal-1.16/options.m4:29: -1- AC_DEFUN([_AM_IF_OPTION], [m4_ifset(_AM_MANGLE_OPTION([$1]), [$2], [$3])])
+m4trace:/usr/share/aclocal-1.16/prog-cc-c-o.m4:12: -1- AC_DEFUN([_AM_PROG_CC_C_O], [AC_REQUIRE([AM_AUX_DIR_EXPAND])dnl
 AC_REQUIRE_AUX_FILE([compile])dnl
 AC_LANG_PUSH([C])dnl
 AC_CACHE_CHECK(
@@ -483,13 +664,13 @@ if test "$am_cv_prog_cc_c_o" != yes; then
    CC="$am_aux_dir/compile $CC"
 fi
 AC_LANG_POP([C])])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/prog-cc-c-o.m4:47: -1- AC_DEFUN_ONCE([AM_PROG_CC_C_O], [AC_REQUIRE([AC_PROG_CC])])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/runlog.m4:17: -1- AC_DEFUN([AM_RUN_LOG], [{ echo "$as_me:$LINENO: $1" >&AS_MESSAGE_LOG_FD
+m4trace:/usr/share/aclocal-1.16/prog-cc-c-o.m4:47: -1- AC_DEFUN_ONCE([AM_PROG_CC_C_O], [AC_REQUIRE([AC_PROG_CC])])
+m4trace:/usr/share/aclocal-1.16/runlog.m4:12: -1- AC_DEFUN([AM_RUN_LOG], [{ echo "$as_me:$LINENO: $1" >&AS_MESSAGE_LOG_FD
    ($1) >&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD
    ac_status=$?
    echo "$as_me:$LINENO: \$? = $ac_status" >&AS_MESSAGE_LOG_FD
    (exit $ac_status); }])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/sanity.m4:82: -1- AC_DEFUN([AM_SANITY_CHECK], [AC_MSG_CHECKING([whether build environment is sane])
+m4trace:/usr/share/aclocal-1.16/sanity.m4:11: -1- AC_DEFUN([AM_SANITY_CHECK], [AC_MSG_CHECKING([whether build environment is sane])
 # Reject unsafe characters in $srcdir or the absolute working directory
 # name.  Accept space and tab only in the latter.
 am_lf='
@@ -560,7 +741,7 @@ AC_CONFIG_COMMANDS_PRE(
    AC_MSG_RESULT([done])])
 rm -f conftest.file
 ])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/silent.m4:60: -1- AC_DEFUN([AM_SILENT_RULES], [AC_ARG_ENABLE([silent-rules], [dnl
+m4trace:/usr/share/aclocal-1.16/silent.m4:12: -1- AC_DEFUN([AM_SILENT_RULES], [AC_ARG_ENABLE([silent-rules], [dnl
 AS_HELP_STRING(
   [--enable-silent-rules],
   [less verbose build output (undo: "make V=1")])
@@ -608,7 +789,7 @@ AM_BACKSLASH='\'
 AC_SUBST([AM_BACKSLASH])dnl
 _AM_SUBST_NOTMAKE([AM_BACKSLASH])dnl
 ])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/strip.m4:28: -1- AC_DEFUN([AM_PROG_INSTALL_STRIP], [AC_REQUIRE([AM_PROG_INSTALL_SH])dnl
+m4trace:/usr/share/aclocal-1.16/strip.m4:17: -1- AC_DEFUN([AM_PROG_INSTALL_STRIP], [AC_REQUIRE([AM_PROG_INSTALL_SH])dnl
 # Installed binaries are usually stripped using 'strip' when the user
 # run "make install-strip".  However 'strip' might not be the right
 # tool to use in cross-compilation environments, therefore Automake
@@ -619,9 +800,9 @@ if test "$cross_compiling" != no; then
 fi
 INSTALL_STRIP_PROGRAM="\$(install_sh) -c -s"
 AC_SUBST([INSTALL_STRIP_PROGRAM])])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/substnot.m4:12: -1- AC_DEFUN([_AM_SUBST_NOTMAKE])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/substnot.m4:17: -1- AC_DEFUN([AM_SUBST_NOTMAKE], [_AM_SUBST_NOTMAKE($@)])
-m4trace:/usr/local/Cellar/automake/1.16.3/share/aclocal-1.16/tar.m4:132: -1- AC_DEFUN([_AM_PROG_TAR], [# Always define AMTAR for backward compatibility.  Yes, it's still used
+m4trace:/usr/share/aclocal-1.16/substnot.m4:12: -1- AC_DEFUN([_AM_SUBST_NOTMAKE])
+m4trace:/usr/share/aclocal-1.16/substnot.m4:17: -1- AC_DEFUN([AM_SUBST_NOTMAKE], [_AM_SUBST_NOTMAKE($@)])
+m4trace:/usr/share/aclocal-1.16/tar.m4:23: -1- AC_DEFUN([_AM_PROG_TAR], [# Always define AMTAR for backward compatibility.  Yes, it's still used
 # in the wild :-(  We should find a proper way to deprecate it ...
 AC_SUBST([AMTAR], ['$${TAR-tar}'])
 
@@ -756,6 +937,7 @@ m4trace:configure.ac:1: -1- m4_pattern_allow([^datadir$])
 m4trace:configure.ac:1: -1- m4_pattern_allow([^sysconfdir$])
 m4trace:configure.ac:1: -1- m4_pattern_allow([^sharedstatedir$])
 m4trace:configure.ac:1: -1- m4_pattern_allow([^localstatedir$])
+m4trace:configure.ac:1: -1- m4_pattern_allow([^runstatedir$])
 m4trace:configure.ac:1: -1- m4_pattern_allow([^includedir$])
 m4trace:configure.ac:1: -1- m4_pattern_allow([^oldincludedir$])
 m4trace:configure.ac:1: -1- m4_pattern_allow([^docdir$])
@@ -781,24 +963,30 @@ m4trace:configure.ac:1: -1- m4_pattern_allow([^LIBS$])
 m4trace:configure.ac:1: -1- m4_pattern_allow([^build_alias$])
 m4trace:configure.ac:1: -1- m4_pattern_allow([^host_alias$])
 m4trace:configure.ac:1: -1- m4_pattern_allow([^target_alias$])
-m4trace:configure.ac:2: -1- AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+m4trace:configure.ac:2: -1- AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects dist-xz dist-bzip2])
 m4trace:configure.ac:2: -1- m4_pattern_allow([^AM_[A-Z]+FLAGS$])
 m4trace:configure.ac:2: -1- AM_SET_CURRENT_AUTOMAKE_VERSION
-m4trace:configure.ac:2: -1- AM_AUTOMAKE_VERSION([1.16.3])
-m4trace:configure.ac:2: -1- _AM_AUTOCONF_VERSION([2.69])
+m4trace:configure.ac:2: -1- AM_AUTOMAKE_VERSION([1.16.5])
+m4trace:configure.ac:2: -1- _AM_AUTOCONF_VERSION([2.71])
 m4trace:configure.ac:2: -1- m4_pattern_allow([^INSTALL_PROGRAM$])
 m4trace:configure.ac:2: -1- m4_pattern_allow([^INSTALL_SCRIPT$])
 m4trace:configure.ac:2: -1- m4_pattern_allow([^INSTALL_DATA$])
 m4trace:configure.ac:2: -1- m4_pattern_allow([^am__isrc$])
 m4trace:configure.ac:2: -1- _AM_SUBST_NOTMAKE([am__isrc])
 m4trace:configure.ac:2: -1- m4_pattern_allow([^CYGPATH_W$])
-m4trace:configure.ac:2: -1- _AM_SET_OPTIONS([-Wall -Werror foreign])
+m4trace:configure.ac:2: -1- _AM_SET_OPTIONS([-Wall -Werror foreign subdir-objects dist-xz dist-bzip2])
 m4trace:configure.ac:2: -1- _AM_SET_OPTION([-Wall])
 m4trace:configure.ac:2: -2- _AM_MANGLE_OPTION([-Wall])
 m4trace:configure.ac:2: -1- _AM_SET_OPTION([-Werror])
 m4trace:configure.ac:2: -2- _AM_MANGLE_OPTION([-Werror])
 m4trace:configure.ac:2: -1- _AM_SET_OPTION([foreign])
 m4trace:configure.ac:2: -2- _AM_MANGLE_OPTION([foreign])
+m4trace:configure.ac:2: -1- _AM_SET_OPTION([subdir-objects])
+m4trace:configure.ac:2: -2- _AM_MANGLE_OPTION([subdir-objects])
+m4trace:configure.ac:2: -1- _AM_SET_OPTION([dist-xz])
+m4trace:configure.ac:2: -2- _AM_MANGLE_OPTION([dist-xz])
+m4trace:configure.ac:2: -1- _AM_SET_OPTION([dist-bzip2])
+m4trace:configure.ac:2: -2- _AM_MANGLE_OPTION([dist-bzip2])
 m4trace:configure.ac:2: -1- m4_pattern_allow([^PACKAGE$])
 m4trace:configure.ac:2: -1- m4_pattern_allow([^VERSION$])
 m4trace:configure.ac:2: -1- _AM_IF_OPTION([no-define], [], [AC_DEFINE_UNQUOTED([PACKAGE], ["$PACKAGE"], [Name of package])
@@ -857,6 +1045,9 @@ AC_PROVIDE_IFELSE([AC_PROG_OBJCXX],
 			     m4_defn([AC_PROG_OBJCXX])[_AM_DEPENDENCIES([OBJCXX])])])dnl
 ])
 m4trace:configure.ac:2: -2- _AM_MANGLE_OPTION([no-dependencies])
+m4trace:configure.ac:2: -1- m4_pattern_allow([^CTAGS$])
+m4trace:configure.ac:2: -1- m4_pattern_allow([^ETAGS$])
+m4trace:configure.ac:2: -1- m4_pattern_allow([^CSCOPE$])
 m4trace:configure.ac:2: -1- AM_SILENT_RULES
 m4trace:configure.ac:2: -1- m4_pattern_allow([^AM_V$])
 m4trace:configure.ac:2: -1- AM_SUBST_NOTMAKE([AM_V])
@@ -867,128 +1058,103 @@ m4trace:configure.ac:2: -1- _AM_SUBST_NOTMAKE([AM_DEFAULT_V])
 m4trace:configure.ac:2: -1- m4_pattern_allow([^AM_DEFAULT_VERBOSITY$])
 m4trace:configure.ac:2: -1- m4_pattern_allow([^AM_BACKSLASH$])
 m4trace:configure.ac:2: -1- _AM_SUBST_NOTMAKE([AM_BACKSLASH])
-m4trace:configure.ac:4: -1- AM_INIT_AUTOMAKE
-m4trace:configure.ac:4: -1- m4_pattern_allow([^AM_[A-Z]+FLAGS$])
-m4trace:configure.ac:4: -1- m4_pattern_allow([^am__isrc$])
-m4trace:configure.ac:4: -1- _AM_SUBST_NOTMAKE([am__isrc])
-m4trace:configure.ac:4: -1- m4_pattern_allow([^CYGPATH_W$])
-m4trace:configure.ac:4: -1- _AM_SET_OPTIONS([])
-m4trace:configure.ac:4: -1- m4_pattern_allow([^PACKAGE$])
-m4trace:configure.ac:4: -1- m4_pattern_allow([^VERSION$])
-m4trace:configure.ac:4: -1- _AM_IF_OPTION([no-define], [], [AC_DEFINE_UNQUOTED([PACKAGE], ["$PACKAGE"], [Name of package])
- AC_DEFINE_UNQUOTED([VERSION], ["$VERSION"], [Version number of package])])
-m4trace:configure.ac:4: -2- _AM_MANGLE_OPTION([no-define])
-m4trace:configure.ac:4: -1- m4_pattern_allow([^PACKAGE$])
-m4trace:configure.ac:4: -1- m4_pattern_allow([^VERSION$])
-m4trace:configure.ac:4: -1- AM_MISSING_PROG([ACLOCAL], [aclocal-${am__api_version}])
-m4trace:configure.ac:4: -1- m4_pattern_allow([^ACLOCAL$])
-m4trace:configure.ac:4: -1- AM_MISSING_PROG([AUTOCONF], [autoconf])
-m4trace:configure.ac:4: -1- m4_pattern_allow([^AUTOCONF$])
-m4trace:configure.ac:4: -1- AM_MISSING_PROG([AUTOMAKE], [automake-${am__api_version}])
-m4trace:configure.ac:4: -1- m4_pattern_allow([^AUTOMAKE$])
-m4trace:configure.ac:4: -1- AM_MISSING_PROG([AUTOHEADER], [autoheader])
-m4trace:configure.ac:4: -1- m4_pattern_allow([^AUTOHEADER$])
-m4trace:configure.ac:4: -1- AM_MISSING_PROG([MAKEINFO], [makeinfo])
-m4trace:configure.ac:4: -1- m4_pattern_allow([^MAKEINFO$])
-m4trace:configure.ac:4: -1- m4_pattern_allow([^mkdir_p$])
-m4trace:configure.ac:4: -1- _AM_IF_OPTION([tar-ustar], [_AM_PROG_TAR([ustar])], [_AM_IF_OPTION([tar-pax], [_AM_PROG_TAR([pax])],
-			     [_AM_PROG_TAR([v7])])])
-m4trace:configure.ac:4: -2- _AM_MANGLE_OPTION([tar-ustar])
-m4trace:configure.ac:4: -1- _AM_IF_OPTION([tar-pax], [_AM_PROG_TAR([pax])], [_AM_PROG_TAR([v7])])
-m4trace:configure.ac:4: -2- _AM_MANGLE_OPTION([tar-pax])
-m4trace:configure.ac:4: -1- _AM_PROG_TAR([v7])
-m4trace:configure.ac:4: -1- m4_pattern_allow([^AMTAR$])
-m4trace:configure.ac:4: -1- m4_pattern_allow([^am__tar$])
-m4trace:configure.ac:4: -1- m4_pattern_allow([^am__untar$])
-m4trace:configure.ac:4: -1- _AM_IF_OPTION([no-dependencies], [], [AC_PROVIDE_IFELSE([AC_PROG_CC],
-		  [_AM_DEPENDENCIES([CC])],
-		  [m4_define([AC_PROG_CC],
-			     m4_defn([AC_PROG_CC])[_AM_DEPENDENCIES([CC])])])dnl
-AC_PROVIDE_IFELSE([AC_PROG_CXX],
-		  [_AM_DEPENDENCIES([CXX])],
-		  [m4_define([AC_PROG_CXX],
-			     m4_defn([AC_PROG_CXX])[_AM_DEPENDENCIES([CXX])])])dnl
-AC_PROVIDE_IFELSE([AC_PROG_OBJC],
-		  [_AM_DEPENDENCIES([OBJC])],
-		  [m4_define([AC_PROG_OBJC],
-			     m4_defn([AC_PROG_OBJC])[_AM_DEPENDENCIES([OBJC])])])dnl
-AC_PROVIDE_IFELSE([AC_PROG_OBJCXX],
-		  [_AM_DEPENDENCIES([OBJCXX])],
-		  [m4_define([AC_PROG_OBJCXX],
-			     m4_defn([AC_PROG_OBJCXX])[_AM_DEPENDENCIES([OBJCXX])])])dnl
-])
-m4trace:configure.ac:4: -2- _AM_MANGLE_OPTION([no-dependencies])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^CC$])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^CFLAGS$])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^LDFLAGS$])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^LIBS$])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^CPPFLAGS$])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^CC$])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^CC$])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^CC$])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^CC$])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^ac_ct_CC$])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^EXEEXT$])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^OBJEXT$])
-m4trace:configure.ac:9: -1- _AM_PROG_CC_C_O
-m4trace:configure.ac:9: -1- AM_RUN_LOG([$CC -c conftest.$ac_ext -o conftest2.$ac_objext])
-m4trace:configure.ac:9: -1- _AM_DEPENDENCIES([CC])
-m4trace:configure.ac:9: -1- AM_SET_DEPDIR
-m4trace:configure.ac:9: -1- m4_pattern_allow([^DEPDIR$])
-m4trace:configure.ac:9: -1- AM_OUTPUT_DEPENDENCY_COMMANDS
-m4trace:configure.ac:9: -1- AM_MAKE_INCLUDE
-m4trace:configure.ac:9: -1- AM_RUN_LOG([${MAKE-make} -f confmf.$s && cat confinc.out])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^am__include$])
-m4trace:configure.ac:9: -1- AM_DEP_TRACK
-m4trace:configure.ac:9: -1- AM_CONDITIONAL([AMDEP], [test "x$enable_dependency_tracking" != xno])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^AMDEP_TRUE$])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^AMDEP_FALSE$])
-m4trace:configure.ac:9: -1- _AM_SUBST_NOTMAKE([AMDEP_TRUE])
-m4trace:configure.ac:9: -1- _AM_SUBST_NOTMAKE([AMDEP_FALSE])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^AMDEPBACKSLASH$])
-m4trace:configure.ac:9: -1- _AM_SUBST_NOTMAKE([AMDEPBACKSLASH])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^am__nodep$])
-m4trace:configure.ac:9: -1- _AM_SUBST_NOTMAKE([am__nodep])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^CCDEPMODE$])
-m4trace:configure.ac:9: -1- AM_CONDITIONAL([am__fastdepCC], [
+m4trace:configure.ac:4: -1- m4_pattern_allow([^CC$])
+m4trace:configure.ac:4: -1- m4_pattern_allow([^CFLAGS$])
+m4trace:configure.ac:4: -1- m4_pattern_allow([^LDFLAGS$])
+m4trace:configure.ac:4: -1- m4_pattern_allow([^LIBS$])
+m4trace:configure.ac:4: -1- m4_pattern_allow([^CPPFLAGS$])
+m4trace:configure.ac:4: -1- m4_pattern_allow([^CC$])
+m4trace:configure.ac:4: -1- m4_pattern_allow([^CC$])
+m4trace:configure.ac:4: -1- m4_pattern_allow([^CC$])
+m4trace:configure.ac:4: -1- m4_pattern_allow([^CC$])
+m4trace:configure.ac:4: -1- m4_pattern_allow([^ac_ct_CC$])
+m4trace:configure.ac:4: -1- m4_pattern_allow([^CC$])
+m4trace:configure.ac:4: -1- m4_pattern_allow([^EXEEXT$])
+m4trace:configure.ac:4: -1- m4_pattern_allow([^OBJEXT$])
+m4trace:configure.ac:4: -1- _AM_PROG_CC_C_O
+m4trace:configure.ac:4: -1- AM_RUN_LOG([$CC -c conftest.$ac_ext -o conftest2.$ac_objext])
+m4trace:configure.ac:4: -1- _AM_DEPENDENCIES([CC])
+m4trace:configure.ac:4: -1- AM_SET_DEPDIR
+m4trace:configure.ac:4: -1- m4_pattern_allow([^DEPDIR$])
+m4trace:configure.ac:4: -1- AM_OUTPUT_DEPENDENCY_COMMANDS
+m4trace:configure.ac:4: -1- AM_MAKE_INCLUDE
+m4trace:configure.ac:4: -1- AM_RUN_LOG([${MAKE-make} -f confmf.$s && cat confinc.out])
+m4trace:configure.ac:4: -1- m4_pattern_allow([^am__include$])
+m4trace:configure.ac:4: -1- AM_DEP_TRACK
+m4trace:configure.ac:4: -1- AM_CONDITIONAL([AMDEP], [test "x$enable_dependency_tracking" != xno])
+m4trace:configure.ac:4: -1- m4_pattern_allow([^AMDEP_TRUE$])
+m4trace:configure.ac:4: -1- m4_pattern_allow([^AMDEP_FALSE$])
+m4trace:configure.ac:4: -1- _AM_SUBST_NOTMAKE([AMDEP_TRUE])
+m4trace:configure.ac:4: -1- _AM_SUBST_NOTMAKE([AMDEP_FALSE])
+m4trace:configure.ac:4: -1- m4_pattern_allow([^AMDEPBACKSLASH$])
+m4trace:configure.ac:4: -1- _AM_SUBST_NOTMAKE([AMDEPBACKSLASH])
+m4trace:configure.ac:4: -1- m4_pattern_allow([^am__nodep$])
+m4trace:configure.ac:4: -1- _AM_SUBST_NOTMAKE([am__nodep])
+m4trace:configure.ac:4: -1- m4_pattern_allow([^CCDEPMODE$])
+m4trace:configure.ac:4: -1- AM_CONDITIONAL([am__fastdepCC], [
   test "x$enable_dependency_tracking" != xno \
   && test "$am_cv_CC_dependencies_compiler_type" = gcc3])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^am__fastdepCC_TRUE$])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^am__fastdepCC_FALSE$])
-m4trace:configure.ac:9: -1- _AM_SUBST_NOTMAKE([am__fastdepCC_TRUE])
-m4trace:configure.ac:9: -1- _AM_SUBST_NOTMAKE([am__fastdepCC_FALSE])
-m4trace:configure.ac:9: -1- _AM_DEPENDENCIES([CC])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^CCDEPMODE$])
-m4trace:configure.ac:9: -1- AM_CONDITIONAL([am__fastdepCC], [
-  test "x$enable_dependency_tracking" != xno \
-  && test "$am_cv_CC_dependencies_compiler_type" = gcc3])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^am__fastdepCC_TRUE$])
-m4trace:configure.ac:9: -1- m4_pattern_allow([^am__fastdepCC_FALSE$])
-m4trace:configure.ac:9: -1- _AM_SUBST_NOTMAKE([am__fastdepCC_TRUE])
-m4trace:configure.ac:9: -1- _AM_SUBST_NOTMAKE([am__fastdepCC_FALSE])
-m4trace:configure.ac:10: -1- m4_pattern_allow([^XMKMF$])
-m4trace:configure.ac:10: -1- m4_pattern_allow([^CPP$])
-m4trace:configure.ac:10: -1- m4_pattern_allow([^CPPFLAGS$])
-m4trace:configure.ac:10: -1- m4_pattern_allow([^CPP$])
-m4trace:configure.ac:10: -1- m4_pattern_allow([^X_DISPLAY_MISSING$])
-m4trace:configure.ac:10: -1- m4_pattern_allow([^X_CFLAGS$])
-m4trace:configure.ac:10: -1- m4_pattern_allow([^X_PRE_LIBS$])
-m4trace:configure.ac:10: -1- m4_pattern_allow([^X_LIBS$])
-m4trace:configure.ac:10: -1- m4_pattern_allow([^X_EXTRA_LIBS$])
-m4trace:configure.ac:13: -1- m4_pattern_allow([^LIB@&t@OBJS$])
-m4trace:configure.ac:13: -1- m4_pattern_allow([^LTLIBOBJS$])
-m4trace:configure.ac:13: -1- AM_CONDITIONAL([am__EXEEXT], [test -n "$EXEEXT"])
-m4trace:configure.ac:13: -1- m4_pattern_allow([^am__EXEEXT_TRUE$])
-m4trace:configure.ac:13: -1- m4_pattern_allow([^am__EXEEXT_FALSE$])
-m4trace:configure.ac:13: -1- _AM_SUBST_NOTMAKE([am__EXEEXT_TRUE])
-m4trace:configure.ac:13: -1- _AM_SUBST_NOTMAKE([am__EXEEXT_FALSE])
-m4trace:configure.ac:13: -1- AM_CONDITIONAL([am__EXEEXT], [test -n "$EXEEXT"])
-m4trace:configure.ac:13: -1- m4_pattern_allow([^am__EXEEXT_TRUE$])
-m4trace:configure.ac:13: -1- m4_pattern_allow([^am__EXEEXT_FALSE$])
-m4trace:configure.ac:13: -1- _AM_SUBST_NOTMAKE([am__EXEEXT_TRUE])
-m4trace:configure.ac:13: -1- _AM_SUBST_NOTMAKE([am__EXEEXT_FALSE])
-m4trace:configure.ac:13: -1- _AC_AM_CONFIG_HEADER_HOOK(["$ac_file"])
-m4trace:configure.ac:13: -1- _AM_OUTPUT_DEPENDENCY_COMMANDS
-m4trace:configure.ac:13: -1- AM_RUN_LOG([cd "$am_dirpart" \
+m4trace:configure.ac:4: -1- m4_pattern_allow([^am__fastdepCC_TRUE$])
+m4trace:configure.ac:4: -1- m4_pattern_allow([^am__fastdepCC_FALSE$])
+m4trace:configure.ac:4: -1- _AM_SUBST_NOTMAKE([am__fastdepCC_TRUE])
+m4trace:configure.ac:4: -1- _AM_SUBST_NOTMAKE([am__fastdepCC_FALSE])
+m4trace:configure.ac:6: -1- PKG_CHECK_MODULES([X11], [x11])
+m4trace:configure.ac:6: -1- PKG_PROG_PKG_CONFIG
+m4trace:configure.ac:6: -1- m4_pattern_forbid([^_?PKG_[A-Z_]+$])
+m4trace:configure.ac:6: -1- m4_pattern_allow([^PKG_CONFIG(_(PATH|LIBDIR|SYSROOT_DIR|ALLOW_SYSTEM_(CFLAGS|LIBS)))?$])
+m4trace:configure.ac:6: -1- m4_pattern_allow([^PKG_CONFIG_(DISABLE_UNINSTALLED|TOP_BUILD_DIR|DEBUG_SPEW)$])
+m4trace:configure.ac:6: -1- m4_pattern_allow([^PKG_CONFIG$])
+m4trace:configure.ac:6: -1- m4_pattern_allow([^PKG_CONFIG_PATH$])
+m4trace:configure.ac:6: -1- m4_pattern_allow([^PKG_CONFIG_LIBDIR$])
+m4trace:configure.ac:6: -1- m4_pattern_allow([^PKG_CONFIG$])
+m4trace:configure.ac:6: -1- m4_pattern_allow([^X11_CFLAGS$])
+m4trace:configure.ac:6: -1- m4_pattern_allow([^X11_LIBS$])
+m4trace:configure.ac:6: -1- PKG_CHECK_EXISTS([x11], [pkg_cv_[]X11_CFLAGS=`$PKG_CONFIG --[]cflags "x11" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes ], [pkg_failed=yes])
+m4trace:configure.ac:6: -1- PKG_CHECK_EXISTS([x11], [pkg_cv_[]X11_LIBS=`$PKG_CONFIG --[]libs "x11" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes ], [pkg_failed=yes])
+m4trace:configure.ac:6: -1- _PKG_SHORT_ERRORS_SUPPORTED
+m4trace:configure.ac:7: -1- PKG_CHECK_MODULES([XEXT], [xext])
+m4trace:configure.ac:7: -1- m4_pattern_allow([^XEXT_CFLAGS$])
+m4trace:configure.ac:7: -1- m4_pattern_allow([^XEXT_LIBS$])
+m4trace:configure.ac:7: -1- PKG_CHECK_EXISTS([xext], [pkg_cv_[]XEXT_CFLAGS=`$PKG_CONFIG --[]cflags "xext" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes ], [pkg_failed=yes])
+m4trace:configure.ac:7: -1- PKG_CHECK_EXISTS([xext], [pkg_cv_[]XEXT_LIBS=`$PKG_CONFIG --[]libs "xext" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes ], [pkg_failed=yes])
+m4trace:configure.ac:7: -1- _PKG_SHORT_ERRORS_SUPPORTED
+m4trace:configure.ac:8: -1- PKG_CHECK_MODULES([XFT], [xft])
+m4trace:configure.ac:8: -1- m4_pattern_allow([^XFT_CFLAGS$])
+m4trace:configure.ac:8: -1- m4_pattern_allow([^XFT_LIBS$])
+m4trace:configure.ac:8: -1- PKG_CHECK_EXISTS([xft], [pkg_cv_[]XFT_CFLAGS=`$PKG_CONFIG --[]cflags "xft" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes ], [pkg_failed=yes])
+m4trace:configure.ac:8: -1- PKG_CHECK_EXISTS([xft], [pkg_cv_[]XFT_LIBS=`$PKG_CONFIG --[]libs "xft" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes ], [pkg_failed=yes])
+m4trace:configure.ac:8: -1- _PKG_SHORT_ERRORS_SUPPORTED
+m4trace:configure.ac:9: -1- PKG_CHECK_MODULES([FREETYPE], [freetype2])
+m4trace:configure.ac:9: -1- m4_pattern_allow([^FREETYPE_CFLAGS$])
+m4trace:configure.ac:9: -1- m4_pattern_allow([^FREETYPE_LIBS$])
+m4trace:configure.ac:9: -1- PKG_CHECK_EXISTS([freetype2], [pkg_cv_[]FREETYPE_CFLAGS=`$PKG_CONFIG --[]cflags "freetype2" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes ], [pkg_failed=yes])
+m4trace:configure.ac:9: -1- PKG_CHECK_EXISTS([freetype2], [pkg_cv_[]FREETYPE_LIBS=`$PKG_CONFIG --[]libs "freetype2" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes ], [pkg_failed=yes])
+m4trace:configure.ac:9: -1- _PKG_SHORT_ERRORS_SUPPORTED
+m4trace:configure.ac:11: -1- m4_pattern_allow([^X11_CFLAGS$])
+m4trace:configure.ac:12: -1- m4_pattern_allow([^X11_LIBS$])
+m4trace:configure.ac:13: -1- m4_pattern_allow([^XEXT_CFLAGS$])
+m4trace:configure.ac:14: -1- m4_pattern_allow([^XEXT_LIBS$])
+m4trace:configure.ac:15: -1- m4_pattern_allow([^XFT_CFLAGS$])
+m4trace:configure.ac:16: -1- m4_pattern_allow([^XFT_LIBS$])
+m4trace:configure.ac:17: -1- m4_pattern_allow([^FREETYPE_CFLAGS$])
+m4trace:configure.ac:18: -1- m4_pattern_allow([^FREETYPE_LIBS$])
+m4trace:configure.ac:22: -1- m4_pattern_allow([^LIB@&t@OBJS$])
+m4trace:configure.ac:22: -1- m4_pattern_allow([^LTLIBOBJS$])
+m4trace:configure.ac:22: -1- AM_CONDITIONAL([am__EXEEXT], [test -n "$EXEEXT"])
+m4trace:configure.ac:22: -1- m4_pattern_allow([^am__EXEEXT_TRUE$])
+m4trace:configure.ac:22: -1- m4_pattern_allow([^am__EXEEXT_FALSE$])
+m4trace:configure.ac:22: -1- _AM_SUBST_NOTMAKE([am__EXEEXT_TRUE])
+m4trace:configure.ac:22: -1- _AM_SUBST_NOTMAKE([am__EXEEXT_FALSE])
+m4trace:configure.ac:22: -1- _AC_AM_CONFIG_HEADER_HOOK(["$ac_file"])
+m4trace:configure.ac:22: -1- _AM_OUTPUT_DEPENDENCY_COMMANDS
+m4trace:configure.ac:22: -1- AM_RUN_LOG([cd "$am_dirpart" \
       && sed -e '/# am--include-marker/d' "$am_filepart" \
         | $MAKE -f - am--depfiles])
