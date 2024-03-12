@@ -20,7 +20,6 @@ ywm
 autom4te.cache/
 config.status
 config.log
-configure
 Makefile.in
 Makefile
 *.in~
