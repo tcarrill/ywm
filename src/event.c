@@ -137,6 +137,31 @@ void on_motion_notify(const XMotionEvent *ev)
 
     x = start_window_geom.x + xdiff;
     y = start_window_geom.y + ydiff;
+	
+	Rect movedWindow = { x, y, width, height };
+	
+    YNode *curr = ylist_head(&clients);
+    while (curr != NULL) {
+      Client *client = (Client *)ylist_data(curr);
+	  fprintf(stderr, "*client = %p\n *c = %p\n", client, c);
+	  
+	  if (client != c) {
+		  Rect clientWindow = { client->x - 10, client->y - 10 , client->width + 10, client->height + 10 };
+		  int snap = intersect(movedWindow, clientWindow);
+	      if (snap == SNAP_LEFT) {
+			  x = client->x - width - FRAME_BORDER_WIDTH;
+			  break;
+	      } else if (snap == SNAP_RIGHT) {
+			  break;
+	      } else if (snap == SNAP_TOP) {
+			  break;
+	      } else if (snap == SNAP_BOTTOM) {
+			  break;
+	      }
+	    }
+			
+		curr = curr->next;
+	  }
 		
     if (snap_window_right(x)) { 
       x = screen_w - start_window_geom.width;

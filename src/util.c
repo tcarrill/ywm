@@ -4,6 +4,21 @@
 #include <sys/stat.h>   /* mkdir(2) */
 #include <errno.h>
 
+int intersect(Rect a, Rect b)
+{
+	if (a.x + a.width > b.x) {
+		return SNAP_LEFT;
+	} else if (a.x < b.x + b.width) {
+		return SNAP_RIGHT;
+	} else if (a.y + a.height > b.y) {
+		return SNAP_TOP;
+	} else if (a.y < b.y + b.height) {
+		return SNAP_BOTTOM;
+	} else {
+		return 0;
+	}
+}
+
 int mkdir_p(const char *path)
 {
     /* Adapted from http://stackoverflow.com/a/2336245/119527 */

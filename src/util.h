@@ -26,6 +26,7 @@ int snap_window_right(int x);
 int snap_window_left(int x);
 int snap_window_top(int y);
 int snap_window_bottom(int y);
+int intersect(Rect a, Rect b);
 int is_title_bar(Point point);
 int is_left_frame(int x);
 int is_right_frame(int x);
