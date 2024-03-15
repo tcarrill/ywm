@@ -138,18 +138,17 @@ void on_motion_notify(const XMotionEvent *ev)
     x = start_window_geom.x + xdiff;
     y = start_window_geom.y + ydiff;
 	
-	Rect movedWindow = { x, y, width, height };
+	Rect movedWindow = (Rect){ .x = x, .y = y, .width = width, .height = height };
 	
-    YNode *curr = ylist_head(&clients);
-    while (curr != NULL) {
-      Client *client = (Client *)ylist_data(curr);
-	  fprintf(stderr, "*client = %p\n *c = %p\n", client, c);
-	  
-	  if (client != c) {
-		  Rect clientWindow = { client->x - 10, client->y - 10 , client->width + 10, client->height + 10 };
+	YNode *curr = ylist_head(&clients);
+	while (curr != NULL) {
+		Client *client = (Client *)ylist_data(curr);
+		fprintf(stderr, "%p\n%p\n", client, c);
+	  	if (client != c) {
+		  Rect clientWindow = (Rect){ .x = client->x, .y = client->y, .width = client->width, .height = client->height };
 		  int snap = intersect(movedWindow, clientWindow);
 	      if (snap == SNAP_LEFT) {
-			  x = client->x - width - FRAME_BORDER_WIDTH;
+			  x = (client->x - width) - 2;
 			  break;
 	      } else if (snap == SNAP_RIGHT) {
 			  break;
@@ -158,10 +157,10 @@ void on_motion_notify(const XMotionEvent *ev)
 	      } else if (snap == SNAP_BOTTOM) {
 			  break;
 	      }
-	    }
-			
-		curr = curr->next;
-	  }
+	  	}
+
+	  	curr = curr->next;
+	}
 		
     if (snap_window_right(x)) { 
       x = screen_w - start_window_geom.width;
@@ -296,6 +295,7 @@ void on_enter_notify(const XCrossingEvent* ev)
     curr = curr->next;
   }
 }
+
 void on_leave_notify(const XCrossingEvent* ev) 
 {
 

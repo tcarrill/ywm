@@ -4,16 +4,28 @@
 #include <sys/stat.h>   /* mkdir(2) */
 #include <errno.h>
 
+int is_above(Rect a, Rect b) {
+	if (a.y + a.height < b.y) {
+		return 1;
+	}
+	
+	return 0;
+}
+
+int is_below(Rect a, Rect b) {
+	if (a.y > b.y + b.height) {
+		return 1;
+	}
+	
+	return 0;
+}
+
 int intersect(Rect a, Rect b)
 {
-	if (a.x + a.width > b.x) {
+	int a_right_edge = a.x + a.width;
+	
+	if ((a_right_edge > b.x - 10) && (a_right_edge < b.x) && !is_above(a, b) && !is_below(a, b)) {
 		return SNAP_LEFT;
-	} else if (a.x < b.x + b.width) {
-		return SNAP_RIGHT;
-	} else if (a.y + a.height > b.y) {
-		return SNAP_TOP;
-	} else if (a.y < b.y + b.height) {
-		return SNAP_BOTTOM;
 	} else {
 		return 0;
 	}
