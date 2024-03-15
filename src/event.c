@@ -148,13 +148,16 @@ void on_motion_notify(const XMotionEvent *ev)
 		  Rect clientWindow = (Rect){ .x = client->x, .y = client->y, .width = client->width, .height = client->height };
 		  int snap = intersect(movedWindow, clientWindow);
 	      if (snap == SNAP_LEFT) {
-			  x = (client->x - width) - 2;
+			  x = client->x - width - 2;
 			  break;
 	      } else if (snap == SNAP_RIGHT) {
+			  x = client->x + client->width + 2;
 			  break;
 	      } else if (snap == SNAP_TOP) {
+			  y = client->y - height - 2;
 			  break;
 	      } else if (snap == SNAP_BOTTOM) {
+			  y = client->y + client->height + 2;
 			  break;
 	      }
 	  	}

@@ -4,7 +4,8 @@
 #include <sys/stat.h>   /* mkdir(2) */
 #include <errno.h>
 
-int is_above(Rect a, Rect b) {
+int is_above(Rect a, Rect b) 
+{
 	if (a.y + a.height < b.y) {
 		return 1;
 	}
@@ -12,8 +13,27 @@ int is_above(Rect a, Rect b) {
 	return 0;
 }
 
-int is_below(Rect a, Rect b) {
+int is_below(Rect a, Rect b) 
+{
 	if (a.y > b.y + b.height) {
+		return 1;
+	}
+	
+	return 0;
+}
+
+int is_left(Rect a, Rect b)
+{
+	if (a.x + a.width < b.x) {
+		return 1;
+	}
+	
+	return 0;
+}
+
+int is_right(Rect a, Rect b) 
+{
+	if (a.x > b.x + b.width) {
 		return 1;
 	}
 	
@@ -23,9 +43,17 @@ int is_below(Rect a, Rect b) {
 int intersect(Rect a, Rect b)
 {
 	int a_right_edge = a.x + a.width;
+	int b_right_edge = b.x + b.width;
+	int a_bottom_edge = a.y + a.height;
 	
 	if ((a_right_edge > b.x - 10) && (a_right_edge < b.x) && !is_above(a, b) && !is_below(a, b)) {
 		return SNAP_LEFT;
+	} else if ((a.x < b_right_edge + 10) && (a.x > b_right_edge) && !is_above(a, b) && !is_below(a, b)) {
+		return SNAP_RIGHT; 
+	} else if ((a_bottom_edge > b.y - 10) && (a_bottom_edge < b.y) && !is_left(a, b) && !is_right(a, b)) { 
+		return SNAP_TOP;
+	} else if ((a.y < b.y + b.height + 10) && (a.y > b.y + b.height) && !is_left(a, b) && !is_right(a, b)) {
+		return SNAP_BOTTOM;
 	} else {
 		return 0;
 	}
