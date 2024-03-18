@@ -35,6 +35,7 @@
 
 #define ButtonMask ButtonPressMask | ButtonReleaseMask
 
+#define SNAP_BUFFER 10
 #define SNAP_LEFT 1
 #define SNAP_RIGHT 2
 #define SNAP_TOP 3

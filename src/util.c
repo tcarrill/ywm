@@ -45,14 +45,15 @@ int intersect(Rect a, Rect b)
 	int a_right_edge = a.x + a.width;
 	int b_right_edge = b.x + b.width;
 	int a_bottom_edge = a.y + a.height;
+	int b_bottom_edge = b.y + b.height;
 	
-	if ((a_right_edge > b.x - 10) && (a_right_edge < b.x) && !is_above(a, b) && !is_below(a, b)) {
+	if ((a_right_edge > b.x - SNAP_BUFFER) && (a_right_edge < b.x) && !is_above(a, b) && !is_below(a, b)) {
 		return SNAP_LEFT;
-	} else if ((a.x < b_right_edge + 10) && (a.x > b_right_edge) && !is_above(a, b) && !is_below(a, b)) {
+	} else if ((a.x < b_right_edge + SNAP_BUFFER) && (a.x > b_right_edge) && !is_above(a, b) && !is_below(a, b)) {
 		return SNAP_RIGHT; 
-	} else if ((a_bottom_edge > b.y - 10) && (a_bottom_edge < b.y) && !is_left(a, b) && !is_right(a, b)) { 
+	} else if ((a_bottom_edge > b.y - SNAP_BUFFER) && (a_bottom_edge < b.y) && !is_left(a, b) && !is_right(a, b)) { 
 		return SNAP_TOP;
-	} else if ((a.y < b.y + b.height + 10) && (a.y > b.y + b.height) && !is_left(a, b) && !is_right(a, b)) {
+	} else if ((a.y < b_bottom_edge + SNAP_BUFFER) && (a.y > b_bottom_edge) && !is_left(a, b) && !is_right(a, b)) {
 		return SNAP_BOTTOM;
 	} else {
 		return 0;
@@ -248,29 +249,28 @@ void remove_client(Client* client) {
   XUngrabServer(dpy);
 }
 
-int snap_buffer = 10;
 int resistance_threshold = 50;
 int snap_window_right(int x)
 {
-  int x_distance = x + start_window_geom.width + snap_buffer;
+  int x_distance = x + start_window_geom.width + SNAP_BUFFER;
   return x_distance >= screen_w && x_distance <= screen_w + resistance_threshold;	
 }
 
 int snap_window_left(int x)
 {
-  int x_distance = x - snap_buffer;
+  int x_distance = x - SNAP_BUFFER;
   return x_distance <= 0 && x_distance >= -resistance_threshold;
 }
 
 int snap_window_top(int y)
 {
-  int y_distance = y - snap_buffer;
+  int y_distance = y - SNAP_BUFFER;
   return y_distance <= 0 && y_distance >= -resistance_threshold;
 }
 
 int snap_window_bottom(int y)
 {
-  int y_distance = y + start_window_geom.height + snap_buffer;
+  int y_distance = y + start_window_geom.height + SNAP_BUFFER;
   return y_distance >= screen_h && y_distance <= screen_h + resistance_threshold;
 }
 
@@ -312,7 +312,7 @@ int is_resize_frame(Point p)
 
 void print_client(Client* c)
 {
-  fprintf(stderr, "Client {\n\ttitle = %s,\n\tclient = %#lx,\n\tframe = %#lx,\n\tclose_button = %#lx,\n}\n", c->title, c->client, c->frame, c->close_button);	
+  fprintf(stderr, "Client {\n\ttitle = %s,\n\tclient = %#lx,\n\tframe = %#lx,\n\tclose_button = %#lx,\n\tgeometry = (%d, %d) %dx%d\n}\n", c->title, c->client, c->frame, c->close_button, c->x, c->y, c->width, c->height);	
 }
 
 int handle_xerror(Display *dpy, XErrorEvent *e)

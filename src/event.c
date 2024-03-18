@@ -117,15 +117,14 @@ void on_button_release(const XButtonEvent *ev)
 	  } else if (ev->window == c->shade_button) {
 	   	handle_shading(c);
 	  }
+	  print_client(c);
   }
-
   XUngrabPointer(dpy, CurrentTime);
 }
 
 void on_motion_notify(const XMotionEvent *ev)
 {
   Client *c = find_client(ev->window);
-
   int x = current_window_geom.x;
   int y = current_window_geom.y;
   int width = current_window_geom.width;
@@ -143,7 +142,6 @@ void on_motion_notify(const XMotionEvent *ev)
 	YNode *curr = ylist_head(&clients);
 	while (curr != NULL) {
 		Client *client = (Client *)ylist_data(curr);
-		fprintf(stderr, "%p\n%p\n", client, c);
 	  	if (client != c) {
 		  Rect clientWindow = (Rect){ .x = client->x, .y = client->y, .width = client->width, .height = client->height };
 		  int snap = intersect(movedWindow, clientWindow);
@@ -176,7 +174,8 @@ void on_motion_notify(const XMotionEvent *ev)
     } else if (snap_window_top(y)) {
       y = 0;
     }
-		
+	c->x = x;
+	c->y = y;	
     XMoveWindow(dpy, ev->window, x, y);
   } else if (!c->shaded) { // resize motion          
     if (is_lower_right_corner(cursor_start_win_point)) {
@@ -185,6 +184,8 @@ void on_motion_notify(const XMotionEvent *ev)
       width = start_window_geom.width + xdiff;
       height = start_window_geom.height + ydiff;
       if (width > MIN_WIDTH && height > MIN_HEIGHT) {
+		  c->width = width + TOTAL_FRAME_WIDTH;
+		  c->height = height + TOTAL_FRAME_HEIGHT;
 	      XResizeWindow(dpy, c->frame, width + TOTAL_FRAME_WIDTH, height + TOTAL_FRAME_HEIGHT);
 	      XResizeWindow(dpy, c->client, width, height);  
       }
@@ -205,12 +206,15 @@ void on_motion_notify(const XMotionEvent *ev)
       }
 
 	  if (width > MIN_WIDTH && height > MIN_HEIGHT) {
+		c->x = x;
+		c->y = y;
+		c->width = width;
+		c->height = height;
       	XMoveResizeWindow(dpy, c->frame, x, y, width, height);
       	XMoveResizeWindow(dpy, c->client, FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT, width - TOTAL_FRAME_WIDTH, height - TOTAL_FRAME_HEIGHT);
   	  }
     }
   }
-
   current_window_geom = (Rect){ .x = x, .y = y, .width = width, .height = height };
   prev_mouse_xy = (Point){ .x = ev->x_root, .y = ev->y_root };
   click1_time = 0;
@@ -264,13 +268,16 @@ void on_configure_request(const XConfigureRequestEvent *ev)
 
 void on_configure_notify(const XConfigureEvent* ev)
 {
-	Client *c = find_client(ev->window);
-	if (c != NULL) {
-		c->x = ev->x;
-		c->y = ev->y;
-		c->width = ev->width;
-		c->height = ev->height;
-	}
+	// fprintf(stdout, "on_configure_notify\n");
+	// Client *c = find_client(ev->window);
+	// if (c != NULL) {
+	// 	print_client(c);
+	//
+	// 	c->x = ev->x;
+	// 	c->y = ev->y;
+	// 	c->width = ev->width;
+	// 	c->height = ev->height;
+	// }
 }
 
 void on_map_request(Window root, const XMapRequestEvent* ev)
