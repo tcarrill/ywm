@@ -117,15 +117,14 @@ void on_button_release(const XButtonEvent *ev)
 	  } else if (ev->window == c->shade_button) {
 	   	handle_shading(c);
 	  }
+	  print_client(c);
   }
-
   XUngrabPointer(dpy, CurrentTime);
 }
 
 void on_motion_notify(const XMotionEvent *ev)
 {
   Client *c = find_client(ev->window);
-
   int x = current_window_geom.x;
   int y = current_window_geom.y;
   int width = current_window_geom.width;
@@ -137,19 +136,43 @@ void on_motion_notify(const XMotionEvent *ev)
 
     x = start_window_geom.x + xdiff;
     y = start_window_geom.y + ydiff;
+	
+	Rect movedWindow = (Rect){ .x = x, .y = y, .width = width, .height = height };
+	
+	YNode *curr = ylist_head(&clients);
+	while (curr != NULL) {
+		Client *client = (Client *)ylist_data(curr);
+	  	if (client != c) {
+		  Rect clientWindow = (Rect){ .x = client->x, .y = client->y, .width = client->width, .height = client->height };
+	      if (snap_window_right(movedWindow, clientWindow)) {
+			  x = client->x - width - 2;
+			  break;
+	      } else if (snap_window_left(movedWindow, clientWindow)) {
+			  x = client->x + client->width + 2;
+			  break;
+	      } else if (snap_window_top(movedWindow, clientWindow)) {
+			  y = client->y + client->height + 2;
+  			  break;
+  	      } else if (snap_window_bottom(movedWindow, clientWindow)) {
+  			  y = client->y - height - 2;
+  			  break;
+  	      }
+	  	}
+
+	  	curr = curr->next;
+	}
 		
-    if (snap_window_right(x)) { 
+    if (snap_window_screen_right(x)) { 
       x = screen_w - start_window_geom.width;
-    } else if (snap_window_left(x)) {
+    } else if (snap_window_screen_left(x)) {
       x = 0;
     } 
 		
-    if (snap_window_bottom(y)) { 
+    if (snap_window_screen_bottom(y)) { 
       y = screen_h - start_window_geom.height;
-    } else if (snap_window_top(y)) {
+    } else if (snap_window_screen_top(y)) {
       y = 0;
-    }
-		
+    }	
     XMoveWindow(dpy, ev->window, x, y);
   } else if (!c->shaded) { // resize motion          
     if (is_lower_right_corner(cursor_start_win_point)) {
@@ -183,7 +206,11 @@ void on_motion_notify(const XMotionEvent *ev)
   	  }
     }
   }
-
+  
+c->x = x;
+c->y = y;
+c->width = width;
+c->height = height;
   current_window_geom = (Rect){ .x = x, .y = y, .width = width, .height = height };
   prev_mouse_xy = (Point){ .x = ev->x_root, .y = ev->y_root };
   click1_time = 0;
@@ -237,13 +264,7 @@ void on_configure_request(const XConfigureRequestEvent *ev)
 
 void on_configure_notify(const XConfigureEvent* ev)
 {
-	Client *c = find_client(ev->window);
-	if (c != NULL) {
-		c->x = ev->x;
-		c->y = ev->y;
-		c->width = ev->width;
-		c->height = ev->height;
-	}
+
 }
 
 void on_map_request(Window root, const XMapRequestEvent* ev)
@@ -271,6 +292,7 @@ void on_enter_notify(const XCrossingEvent* ev)
     curr = curr->next;
   }
 }
+
 void on_leave_notify(const XCrossingEvent* ev) 
 {
 

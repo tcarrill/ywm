@@ -35,6 +35,9 @@
 
 #define ButtonMask ButtonPressMask | ButtonReleaseMask
 
+#define SNAP_BUFFER 10
+#define SNAP_RESISTANCE_THRESHOLD 25
+
 extern GC focused_light_grey_gc;
 extern GC focused_dark_grey_gc;
 

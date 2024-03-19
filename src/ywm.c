@@ -324,9 +324,9 @@ void frame(Window root, Window win)
 {
   XWindowAttributes attrs;
   XGetWindowAttributes(dpy, win, &attrs);
-fprintf(stderr, "override_redirect: %i\n", attrs.override_redirect);	
+  fprintf(stderr, "override_redirect: %i\n", attrs.override_redirect);	
   if (!attrs.override_redirect) {
-  Window frame = XCreateSimpleWindow(
+  	Window frame = XCreateSimpleWindow(
                                      dpy,
                                      root,
                                      attrs.x,
@@ -337,45 +337,45 @@ fprintf(stderr, "override_redirect: %i\n", attrs.override_redirect);
                                      0x000000,
                                      0x000000);
 		
-  Window close_button = create_titlebar_button(frame, attrs.x + 3, attrs.y + 4, 13, 13, NorthWestGravity);
-  Window shade_button = create_titlebar_button(frame, attrs.width - 6, attrs.y + 4, 13, 13, NorthEastGravity);
+  	Window close_button = create_titlebar_button(frame, attrs.x + 3, attrs.y + 4, 13, 13, NorthWestGravity);
+  	Window shade_button = create_titlebar_button(frame, attrs.width - 6, attrs.y + 4, 13, 13, NorthEastGravity);
 			
-  XSelectInput(
+  	XSelectInput(
                dpy,
                frame,
                SubstructureRedirectMask | SubstructureNotifyMask | ButtonMask | ExposureMask | EnterWindowMask);
 		 
-  XReparentWindow(dpy, win, frame, FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT);  // Offset of client window within frame.
+  	XReparentWindow(dpy, win, frame, FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT);  // Offset of client window within frame.
   
-  XAddToSaveSet(dpy, win);
-  Client *client = (Client *)malloc(sizeof *client);
-  client->x = attrs.x;
-  client->y = attrs.y;
-  client->width = attrs.width;
-  client->height = attrs.height;
-  client->shaded = 0;
-  client->shaped = 0;
-  client->client = win;
-  client->frame = frame;
-  client->close_button = close_button;
-  client->shade_button = shade_button;
-  client->xft_draw = XftDrawCreate(dpy, (Drawable) client->frame, DefaultVisual(dpy, DefaultScreen(dpy)), DefaultColormap(dpy, DefaultScreen(dpy)));
+	XAddToSaveSet(dpy, win);
+	Client *client = (Client *)malloc(sizeof *client);
+	client->x = attrs.x;
+	client->y = attrs.y;
+	client->width = attrs.width;
+	client->height = attrs.height;
+	client->shaded = 0;
+	client->shaped = 0;
+	client->client = win;
+	client->frame = frame;
+	client->close_button = close_button;
+	client->shade_button = shade_button;
+	client->xft_draw = XftDrawCreate(dpy, (Drawable) client->frame, DefaultVisual(dpy, DefaultScreen(dpy)), DefaultColormap(dpy, DefaultScreen(dpy)));
 	 
-  if (shape) {
-	XShapeSelectInput(dpy, client->client, ShapeNotifyMask);
-	set_shape(client);
-  }
+	if (shape) {
+		XShapeSelectInput(dpy, client->client, ShapeNotifyMask);
+		set_shape(client);
+	}
 	 
-  XFetchName(dpy, win, &client->title);
-  ylist_ins_prev(&clients, ylist_head(&clients), client);
+	XFetchName(dpy, win, &client->title);
+	ylist_ins_prev(&clients, ylist_head(&clients), client);
 #ifdef DEBUG  
-  print_client(client);
-  fprintf(stderr, "Managed clients: %d\n", ylist_size(&clients));
+	print_client(client);
+	fprintf(stderr, "Managed clients: %d\n", ylist_size(&clients));
 #endif
-  XMapWindow(dpy, frame);
-  XMapWindow(dpy, close_button);
-  XMapWindow(dpy, shade_button);
-}
+	XMapWindow(dpy, frame);
+	XMapWindow(dpy, close_button);
+	XMapWindow(dpy, shade_button);
+  }
 }
 
 void unframe(Window win) 

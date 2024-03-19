@@ -4,6 +4,42 @@
 #include <sys/stat.h>   /* mkdir(2) */
 #include <errno.h>
 
+int is_above(Rect a, Rect b) 
+{
+	if (a.y + a.height < b.y) {
+		return 1;
+	}
+	
+	return 0;
+}
+
+int is_below(Rect a, Rect b) 
+{
+	if (a.y > b.y + b.height) {
+		return 1;
+	}
+	
+	return 0;
+}
+
+int is_left(Rect a, Rect b)
+{
+	if (a.x + a.width < b.x) {
+		return 1;
+	}
+	
+	return 0;
+}
+
+int is_right(Rect a, Rect b) 
+{
+	if (a.x > b.x + b.width) {
+		return 1;
+	}
+	
+	return 0;
+}
+
 int mkdir_p(const char *path)
 {
     /* Adapted from http://stackoverflow.com/a/2336245/119527 */
@@ -193,29 +229,55 @@ void remove_client(Client* client) {
   XUngrabServer(dpy);
 }
 
-int snap_buffer = 10;
 int resistance_threshold = 50;
-int snap_window_right(int x)
+
+int snap_window_right(Rect a, Rect b)
 {
-  int x_distance = x + start_window_geom.width + snap_buffer;
+	int x_distance = a.x + start_window_geom.width + SNAP_BUFFER;
+	return !is_above(a, b) && !is_below(a, b) && (x_distance >= b.x) && (x_distance <= b.x + SNAP_RESISTANCE_THRESHOLD);
+}
+
+int snap_window_left(Rect a, Rect b)
+{
+	int b_right_edge = b.x + b.width;
+    int x_distance = a.x - SNAP_BUFFER;
+	return !is_above(a, b) && !is_below(a, b) && (x_distance <= b_right_edge) && (x_distance >= b_right_edge - SNAP_RESISTANCE_THRESHOLD);
+}
+
+int snap_window_top(Rect a, Rect b)
+{
+	int b_bottom_edge = b.y + b.height;
+	int y_distance = a.y - SNAP_BUFFER;
+	return !is_left(a, b) && !is_right(a, b) && (y_distance <= b_bottom_edge) && (y_distance >= b_bottom_edge - SNAP_RESISTANCE_THRESHOLD);
+}
+
+int snap_window_bottom(Rect a, Rect b)
+{
+	int y_distance = a.y + start_window_geom.height + SNAP_BUFFER;
+	return !is_left(a, b) && !is_right(a, b) && (y_distance >= b.y) && (y_distance <= b.y + SNAP_RESISTANCE_THRESHOLD);
+}
+
+int snap_window_screen_right(int x)
+{
+  int x_distance = x + start_window_geom.width + SNAP_BUFFER;
   return x_distance >= screen_w && x_distance <= screen_w + resistance_threshold;	
 }
 
-int snap_window_left(int x)
+int snap_window_screen_left(int x)
 {
-  int x_distance = x - snap_buffer;
+  int x_distance = x - SNAP_BUFFER;
   return x_distance <= 0 && x_distance >= -resistance_threshold;
 }
 
-int snap_window_top(int y)
+int snap_window_screen_top(int y)
 {
-  int y_distance = y - snap_buffer;
+  int y_distance = y - SNAP_BUFFER;
   return y_distance <= 0 && y_distance >= -resistance_threshold;
 }
 
-int snap_window_bottom(int y)
+int snap_window_screen_bottom(int y)
 {
-  int y_distance = y + start_window_geom.height + snap_buffer;
+  int y_distance = y + start_window_geom.height + SNAP_BUFFER;
   return y_distance >= screen_h && y_distance <= screen_h + resistance_threshold;
 }
 
@@ -257,7 +319,7 @@ int is_resize_frame(Point p)
 
 void print_client(Client* c)
 {
-  fprintf(stderr, "Client {\n\ttitle = %s,\n\tclient = %#lx,\n\tframe = %#lx,\n\tclose_button = %#lx,\n}\n", c->title, c->client, c->frame, c->close_button);	
+  fprintf(stderr, "Client {\n\ttitle = %s,\n\tclient = %#lx,\n\tframe = %#lx,\n\tclose_button = %#lx,\n\tgeometry = (%d, %d) %dx%d\n}\n", c->title, c->client, c->frame, c->close_button, c->x, c->y, c->width, c->height);	
 }
 
 int handle_xerror(Display *dpy, XErrorEvent *e)
