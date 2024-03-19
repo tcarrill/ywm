@@ -144,38 +144,37 @@ void on_motion_notify(const XMotionEvent *ev)
 		Client *client = (Client *)ylist_data(curr);
 	  	if (client != c) {
 		  Rect clientWindow = (Rect){ .x = client->x, .y = client->y, .width = client->width, .height = client->height };
-		  int snap = intersect(movedWindow, clientWindow);
-	      if (snap == SNAP_LEFT) {
+	      if (snap_window_right(movedWindow, clientWindow)) {
 			  x = client->x - width - 2;
 			  break;
-	      } else if (snap == SNAP_RIGHT) {
+	      } else if (snap_window_left(movedWindow, clientWindow)) {
 			  x = client->x + client->width + 2;
 			  break;
-	      } else if (snap == SNAP_TOP) {
-			  y = client->y - height - 2;
-			  break;
-	      } else if (snap == SNAP_BOTTOM) {
+	      } else if (snap_window_top(movedWindow, clientWindow)) {
 			  y = client->y + client->height + 2;
-			  break;
-	      }
+  			  break;
+  	      } else if (snap_window_bottom(movedWindow, clientWindow)) {
+  			  y = client->y - height - 2;
+  			  break;
+  	      }
 	  	}
 
 	  	curr = curr->next;
 	}
 		
-    if (snap_window_right(x)) { 
+    if (snap_window_screen_right(x)) { 
       x = screen_w - start_window_geom.width;
-    } else if (snap_window_left(x)) {
+    } else if (snap_window_screen_left(x)) {
       x = 0;
     } 
 		
-    if (snap_window_bottom(y)) { 
+    if (snap_window_screen_bottom(y)) { 
       y = screen_h - start_window_geom.height;
-    } else if (snap_window_top(y)) {
+    } else if (snap_window_screen_top(y)) {
       y = 0;
     }
-	c->x = x;
-	c->y = y;	
+	// c->x = x;
+	// c->y = y;	
     XMoveWindow(dpy, ev->window, x, y);
   } else if (!c->shaded) { // resize motion          
     if (is_lower_right_corner(cursor_start_win_point)) {
@@ -184,9 +183,11 @@ void on_motion_notify(const XMotionEvent *ev)
       width = start_window_geom.width + xdiff;
       height = start_window_geom.height + ydiff;
       if (width > MIN_WIDTH && height > MIN_HEIGHT) {
-		  c->width = width + TOTAL_FRAME_WIDTH;
-		  c->height = height + TOTAL_FRAME_HEIGHT;
-	      XResizeWindow(dpy, c->frame, width + TOTAL_FRAME_WIDTH, height + TOTAL_FRAME_HEIGHT);
+		  int newWidth = width + TOTAL_FRAME_WIDTH;
+		  int newHeight = height + TOTAL_FRAME_HEIGHT;
+		  // c->width = newWidth;
+		  // c->height = newHeight;
+	      XResizeWindow(dpy, c->frame, newWidth, newHeight);
 	      XResizeWindow(dpy, c->client, width, height);  
       }
     } else {
@@ -206,15 +207,20 @@ void on_motion_notify(const XMotionEvent *ev)
       }
 
 	  if (width > MIN_WIDTH && height > MIN_HEIGHT) {
-		c->x = x;
-		c->y = y;
-		c->width = width;
-		c->height = height;
+		// c->x = x;
+		// c->y = y;
+		// c->width = width;
+		// c->height = height;
       	XMoveResizeWindow(dpy, c->frame, x, y, width, height);
       	XMoveResizeWindow(dpy, c->client, FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT, width - TOTAL_FRAME_WIDTH, height - TOTAL_FRAME_HEIGHT);
   	  }
     }
   }
+  
+c->x = x;
+c->y = y;
+c->width = width;
+c->height = height;
   current_window_geom = (Rect){ .x = x, .y = y, .width = width, .height = height };
   prev_mouse_xy = (Point){ .x = ev->x_root, .y = ev->y_root };
   click1_time = 0;
@@ -268,16 +274,7 @@ void on_configure_request(const XConfigureRequestEvent *ev)
 
 void on_configure_notify(const XConfigureEvent* ev)
 {
-	// fprintf(stdout, "on_configure_notify\n");
-	// Client *c = find_client(ev->window);
-	// if (c != NULL) {
-	// 	print_client(c);
-	//
-	// 	c->x = ev->x;
-	// 	c->y = ev->y;
-	// 	c->width = ev->width;
-	// 	c->height = ev->height;
-	// }
+
 }
 
 void on_map_request(Window root, const XMapRequestEvent* ev)

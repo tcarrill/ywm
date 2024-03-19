@@ -36,10 +36,7 @@
 #define ButtonMask ButtonPressMask | ButtonReleaseMask
 
 #define SNAP_BUFFER 10
-#define SNAP_LEFT 1
-#define SNAP_RIGHT 2
-#define SNAP_TOP 3
-#define SNAP_BOTTOM 4
+#define SNAP_RESISTANCE_THRESHOLD 25
 
 extern GC focused_light_grey_gc;
 extern GC focused_dark_grey_gc;
