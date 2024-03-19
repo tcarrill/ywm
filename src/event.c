@@ -172,9 +172,7 @@ void on_motion_notify(const XMotionEvent *ev)
       y = screen_h - start_window_geom.height;
     } else if (snap_window_screen_top(y)) {
       y = 0;
-    }
-	// c->x = x;
-	// c->y = y;	
+    }	
     XMoveWindow(dpy, ev->window, x, y);
   } else if (!c->shaded) { // resize motion          
     if (is_lower_right_corner(cursor_start_win_point)) {
@@ -183,11 +181,7 @@ void on_motion_notify(const XMotionEvent *ev)
       width = start_window_geom.width + xdiff;
       height = start_window_geom.height + ydiff;
       if (width > MIN_WIDTH && height > MIN_HEIGHT) {
-		  int newWidth = width + TOTAL_FRAME_WIDTH;
-		  int newHeight = height + TOTAL_FRAME_HEIGHT;
-		  // c->width = newWidth;
-		  // c->height = newHeight;
-	      XResizeWindow(dpy, c->frame, newWidth, newHeight);
+	      XResizeWindow(dpy, c->frame, width + TOTAL_FRAME_WIDTH, height + TOTAL_FRAME_HEIGHT);
 	      XResizeWindow(dpy, c->client, width, height);  
       }
     } else {
@@ -207,10 +201,6 @@ void on_motion_notify(const XMotionEvent *ev)
       }
 
 	  if (width > MIN_WIDTH && height > MIN_HEIGHT) {
-		// c->x = x;
-		// c->y = y;
-		// c->width = width;
-		// c->height = height;
       	XMoveResizeWindow(dpy, c->frame, x, y, width, height);
       	XMoveResizeWindow(dpy, c->client, FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT, width - TOTAL_FRAME_WIDTH, height - TOTAL_FRAME_HEIGHT);
   	  }
