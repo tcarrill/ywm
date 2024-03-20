@@ -142,6 +142,7 @@ void on_motion_notify(const XMotionEvent *ev)
 	YNode *curr = ylist_head(&clients);
 	while (curr != NULL) {
 		Client *client = (Client *)ylist_data(curr);
+		
 	  	if (client != c) {
 		  Rect clientWindow = (Rect){ .x = client->x, .y = client->y, .width = client->width, .height = client->height };
 	      if (snap_window_right(movedWindow, clientWindow)) {
@@ -173,21 +174,16 @@ void on_motion_notify(const XMotionEvent *ev)
     } else if (snap_window_screen_top(y)) {
       y = 0;
     }	
+	
     XMoveWindow(dpy, ev->window, x, y);
   } else if (!c->shaded) { // resize motion          
-    if (is_lower_right_corner(cursor_start_win_point)) {
-      int xdiff = ev->x_root - cursor_start_point.x;
-      int ydiff = ev->y_root - cursor_start_point.y;
-      width = start_window_geom.width + xdiff;
-      height = start_window_geom.height + ydiff;
-      if (width > MIN_WIDTH && height > MIN_HEIGHT) {
-	      XResizeWindow(dpy, c->frame, width + TOTAL_FRAME_WIDTH, height + TOTAL_FRAME_HEIGHT);
-	      XResizeWindow(dpy, c->client, width, height);  
-      }
-    } else {
       int xdiff = ev->x_root - prev_mouse_xy.x;
       int ydiff = ev->y_root - prev_mouse_xy.y;
-      if (is_lower_left_corner(cursor_start_win_point)) {
+	  
+	  if (is_lower_right_corner(cursor_start_win_point)) {
+      	width = current_window_geom.width + xdiff;
+      	height = current_window_geom.height + ydiff;
+	  } else if (is_lower_left_corner(cursor_start_win_point)) {
         x = current_window_geom.x + xdiff;
         width = current_window_geom.width + (xdiff * -1);
         height = current_window_geom.height + ydiff;
@@ -204,13 +200,12 @@ void on_motion_notify(const XMotionEvent *ev)
       	XMoveResizeWindow(dpy, c->frame, x, y, width, height);
       	XMoveResizeWindow(dpy, c->client, FRAME_BORDER_WIDTH, FRAME_TITLEBAR_HEIGHT, width - TOTAL_FRAME_WIDTH, height - TOTAL_FRAME_HEIGHT);
   	  }
-    }
   }
   
-c->x = x;
-c->y = y;
-c->width = width;
-c->height = height;
+  c->x = x;
+  c->y = y;
+  c->width = width;
+  c->height = height;
   current_window_geom = (Rect){ .x = x, .y = y, .width = width, .height = height };
   prev_mouse_xy = (Point){ .x = ev->x_root, .y = ev->y_root };
   click1_time = 0;
