@@ -139,41 +139,45 @@ void on_motion_notify(const XMotionEvent *ev)
 	
 	Rect movedWindow = (Rect){ .x = x, .y = y, .width = width, .height = height };
 	
-	YNode *curr = ylist_head(&clients);
-	while (curr != NULL) {
-		Client *client = (Client *)ylist_data(curr);
+	if (config->window_snap_buffer > 0) {
+		YNode *curr = ylist_head(&clients);
+		while (curr != NULL) {
+			Client *client = (Client *)ylist_data(curr);
 		
-	  	if (client != c) {
-		  Rect clientWindow = (Rect){ .x = client->x, .y = client->y, .width = client->width, .height = client->height };
-	      if (snap_window_right(movedWindow, clientWindow)) {
-			  x = client->x - width - 2;
-			  break;
-	      } else if (snap_window_left(movedWindow, clientWindow)) {
-			  x = client->x + client->width + 2;
-			  break;
-	      } else if (snap_window_top(movedWindow, clientWindow)) {
-			  y = client->y + client->height + 2;
-  			  break;
-  	      } else if (snap_window_bottom(movedWindow, clientWindow)) {
-  			  y = client->y - height - 2;
-  			  break;
-  	      }
-	  	}
+		  	if (client != c) {
+			  Rect clientWindow = (Rect){ .x = client->x, .y = client->y, .width = client->width, .height = client->height };
+		      if (snap_window_right(movedWindow, clientWindow)) {
+				  x = client->x - width - 2;
+				  break;
+		      } else if (snap_window_left(movedWindow, clientWindow)) {
+				  x = client->x + client->width + 2;
+				  break;
+		      } else if (snap_window_top(movedWindow, clientWindow)) {
+				  y = client->y + client->height + 2;
+	  			  break;
+	  	      } else if (snap_window_bottom(movedWindow, clientWindow)) {
+	  			  y = client->y - height - 2;
+	  			  break;
+	  	      }
+		  	}
 
-	  	curr = curr->next;
+		  	curr = curr->next;
+		}
 	}
+	
+	if (config->edge_snap_buffer > 0) {
+	    if (snap_window_screen_right(x)) { 
+	      x = screen_w - start_window_geom.width;
+	    } else if (snap_window_screen_left(x)) {
+	      x = 0;
+	    } 
 		
-    if (snap_window_screen_right(x)) { 
-      x = screen_w - start_window_geom.width;
-    } else if (snap_window_screen_left(x)) {
-      x = 0;
-    } 
-		
-    if (snap_window_screen_bottom(y)) { 
-      y = screen_h - start_window_geom.height;
-    } else if (snap_window_screen_top(y)) {
-      y = 0;
-    }	
+	    if (snap_window_screen_bottom(y)) { 
+	      y = screen_h - start_window_geom.height;
+	    } else if (snap_window_screen_top(y)) {
+	      y = 0;
+	    }
+	}	
 	
     XMoveWindow(dpy, ev->window, x, y);
   } else if (!c->shaded) { // resize motion          
