@@ -11,7 +11,7 @@
 #include "config.h"
 
 #define DBL_CLICK_SPEED 350
-
+extern Config* config;
 extern Time click1_time;
 extern Time click2_time;
 
