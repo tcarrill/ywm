@@ -1,17 +1,8 @@
 #ifndef YWM_H
 #define YWM_H
-#include <stdlib.h>
-#include <errno.h>
-#include <X11/cursorfont.h>
-#include <X11/Xft/Xft.h>
 #include "ylist.h"
 #include "client.h"
 #include "menu.h"
-#include "config.h"
-
-#ifdef SHAPE
-#include <X11/extensions/shape.h>
-#endif
 
 #define FRAME_TITLEBAR_HEIGHT 20
 #define FRAME_BORDER_WIDTH 4

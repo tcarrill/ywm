@@ -1,4 +1,9 @@
 #include "event.h"
+#include "ywm.h"
+#include "client.h"
+#include "util.h"
+#include "config.h"
+
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 Point prev_mouse_xy;

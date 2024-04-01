@@ -1,14 +1,9 @@
 #ifndef EVENT_H
 #define EVENT_H
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <X11/Xlib.h>
 #include <X11/cursorfont.h>
-#include "ywm.h"
-#include "client.h"
-#include "util.h"
-#include "config.h"
+
 
 #define DBL_CLICK_SPEED 350
 extern Time click1_time;

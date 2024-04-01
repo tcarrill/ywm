@@ -33,5 +33,5 @@ extern YList menu_items;
 Window create_menu();
 void draw_menu();
 void free_menu();
-void flash_menu();
+void flash_menu(MenuItem* menu_item);
 #endif

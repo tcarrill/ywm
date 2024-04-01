@@ -1,8 +1,18 @@
-#include "util.h"
 #include <string.h>
 #include <limits.h>     /* PATH_MAX */
 #include <sys/stat.h>   /* mkdir(2) */
 #include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <X11/Xlib.h>
+#include <X11/Xcms.h>
+#include <math.h>
+#include "util.h"
+#include "client.h"
+#include "ylist.h"
+#include "ywm.h"
 
 int is_above(Rect a, Rect b) 
 {

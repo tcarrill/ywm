@@ -1,16 +1,9 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdio.h>
 #include <X11/Xlib.h>
 #include <X11/Xcms.h>
-#include <math.h>
 #include "client.h"
-#include "ywm.h"
-#include "config.h"
 
 #define FRAME 0
 #define CLIENT 1

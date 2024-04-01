@@ -1,8 +1,6 @@
 #ifndef DLIST_H
 #define DLIST_H
 
-#include <stdlib.h>
-
 typedef struct YNode {
   void *data;
   struct YNode *prev;

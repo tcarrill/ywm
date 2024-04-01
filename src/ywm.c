@@ -3,11 +3,20 @@
 #include <X11/Xlib.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <X11/cursorfont.h>
+#include <X11/Xft/Xft.h>
+#ifdef SHAPE
+#include <X11/extensions/shape.h>
+#endif
 #include "menu.h"
 #include "util.h"
 #include "ywm.h"
 #include "event.h"
 #include "config.h"
+#include "ylist.h"
+#include "client.h"
 	
 GC black_gc = NULL;
 GC focused_light_grey_gc = NULL;

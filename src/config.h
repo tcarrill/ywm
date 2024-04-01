@@ -1,12 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include <stdio.h>
-#include <X11/Xlib.h>
-#include "util.h"
-#include "ylist.h"
-#include "ywm.h"
-
 typedef struct {
   int window_resistance;
   int window_snap_buffer;

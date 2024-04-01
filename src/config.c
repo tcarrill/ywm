@@ -1,6 +1,10 @@
 #include <sys/stat.h>
 #include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "config.h"
+#include "util.h"
+#include "ywm.h"
 
 #define YWM_DIR ".ywm"
 #define CONFIG_FILE "ywmrc"

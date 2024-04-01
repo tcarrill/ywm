@@ -1,5 +1,6 @@
 #include <sys/stat.h>
 #include <limits.h>
+#include <time.h>
 #include "menu.h"
 
 #define TITLE_BAR_HEIGHT 22
@@ -8,7 +9,7 @@
 #define MENU_TITLE_LIGHT_STRIP "#bfbfcc"
 #define MENU_TITLE_DARK_STRIP "#5d5d68"
 #define MENU_BG_COLOR "#AAAAAA"
-#define FLASH_COLOR "#ccc8d1"
+#define FLASH_COLOR "#c8c5e6"
 #define YWM_DIR ".ywm"
 #define MENU_FILE "ywm.menu"
 
@@ -19,6 +20,7 @@ GC menu_dark_strip_gc;
 
 XftFont *menu_xft_font = NULL;
 YList menu_items;
+struct timespec remaining, request = { 0, 31250000L }; 
 
 char ywm_menu_path[PATH_MAX];
 
@@ -203,7 +205,7 @@ void flash_menu(MenuItem* menu_item) {
     }
 
     XSync(dpy, True);
-    usleep(22500);
+    nanosleep(&request, &remaining);
   }
 }
 
