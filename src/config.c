@@ -9,7 +9,9 @@
 #define YWM_DIR ".ywm"
 #define CONFIG_FILE "ywmrc"
 
+char ywm_path[PATH_MAX];
 char ywm_config_path[PATH_MAX];
+YConfig* config;
 
 void write_default_config_file() {
   const char* const default_config[] = {

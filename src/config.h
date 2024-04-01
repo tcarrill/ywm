@@ -10,7 +10,7 @@ typedef struct {
   char menu_title_color[8];
 } YConfig;
 
-YConfig* config;
+extern YConfig* config;
 
 void read_config();
 #endif
