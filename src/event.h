@@ -8,6 +8,7 @@
 #include "ywm.h"
 #include "client.h"
 #include "util.h"
+#include "config.h"
 
 #define DBL_CLICK_SPEED 350
 
