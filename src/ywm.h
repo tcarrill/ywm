@@ -4,6 +4,8 @@
 #include "client.h"
 #include "menu.h"
 
+#define YWM_DIR ".ywm"
+
 #define FRAME_TITLEBAR_HEIGHT 20
 #define FRAME_BORDER_WIDTH 4
 #define X_BORDER_WIDTH 1
@@ -26,6 +28,8 @@
 #define SPACE 3
 
 #define ButtonMask ButtonPressMask | ButtonReleaseMask
+
+extern char ywm_path[PATH_MAX];
 
 extern GC focused_light_grey_gc;
 extern GC focused_dark_grey_gc;

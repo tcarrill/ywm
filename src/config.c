@@ -6,10 +6,8 @@
 #include "util.h"
 #include "ywm.h"
 
-#define YWM_DIR ".ywm"
 #define CONFIG_FILE "ywmrc"
 
-char ywm_path[PATH_MAX];
 char ywm_config_path[PATH_MAX];
 YConfig* config;
 
@@ -40,7 +38,6 @@ FILE* open_config_file(char *path)
 
 void read_config()
 {	
-  snprintf(ywm_path, sizeof(ywm_path), "%s/%s", getenv("HOME"), YWM_DIR);  
   snprintf(ywm_config_path, sizeof(ywm_config_path), "%s/%s", ywm_path, CONFIG_FILE);
   FILE *fp = open_config_file(ywm_config_path);
   if (fp == NULL) {

@@ -18,6 +18,8 @@
 #include "ylist.h"
 #include "client.h"
 	
+char ywm_path[PATH_MAX];
+
 GC black_gc = NULL;
 GC focused_light_grey_gc = NULL;
 GC focused_dark_grey_gc = NULL;
@@ -478,6 +480,7 @@ int main(int argc, char *argv[])
 #ifdef DEBUG
   fprintf(stderr, "DEBUG mode is on\n");
 #endif
+  snprintf(ywm_path, sizeof(ywm_path), "%s/%s", getenv("HOME"), YWM_DIR);  
 
   read_config();
 

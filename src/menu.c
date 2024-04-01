@@ -2,6 +2,7 @@
 #include <limits.h>
 #include <time.h>
 #include "menu.h"
+#include "ywm.h"
 
 #define TITLE_BAR_HEIGHT 22
 
@@ -10,7 +11,7 @@
 #define MENU_TITLE_DARK_STRIP "#5d5d68"
 #define MENU_BG_COLOR "#AAAAAA"
 #define FLASH_COLOR "#c8c5e6"
-#define YWM_DIR ".ywm"
+
 #define MENU_FILE "ywm.menu"
 
 GC flash_gc;
@@ -22,7 +23,6 @@ XftFont *menu_xft_font = NULL;
 YList menu_items;
 struct timespec remaining, request = { 0, 41666666L }; 
 
-char ywm_path[PATH_MAX];
 char ywm_menu_path[PATH_MAX];
 
 void write_default_menu_file() {
@@ -93,7 +93,6 @@ Window create_menu()
   gcv.foreground = create_color(MENU_TITLE_DARK_STRIP).pixel;
   menu_dark_strip_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);
   
-  snprintf(ywm_path, sizeof(ywm_path), "%s/%s", getenv("HOME"), YWM_DIR);  
   snprintf(ywm_menu_path, sizeof(ywm_menu_path), "%s/%s", ywm_path, MENU_FILE);
   FILE *fp = open_menu_file(ywm_menu_path);
   if (fp == NULL) {
