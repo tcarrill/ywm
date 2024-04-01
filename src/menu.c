@@ -84,7 +84,7 @@ Window create_menu()
 
   gcv.foreground = create_color(FLASH_COLOR).pixel;
   flash_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);  
-  gcv.foreground = create_color(MENU_TITLE_COLOR).pixel;
+  gcv.foreground =  create_color(config->menu_title_color).pixel;
   menu_title_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);
   gcv.foreground = create_color(MENU_TITLE_LIGHT_STRIP).pixel;
   menu_light_strip_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);
@@ -95,7 +95,7 @@ Window create_menu()
   snprintf(ywm_menu_path, sizeof(ywm_menu_path), "%s/%s", ywm_path, MENU_FILE);
   FILE *fp = open_menu_file(ywm_menu_path);
   if (fp == NULL) {
-    fprintf(stderr, "Cannot open %s\n", ywm_menu_path);
+    fprintf(stderr, "Cannot open %s, creating default menu\n", ywm_menu_path);
     write_default_menu_file();
     fp = open_menu_file(ywm_menu_path);
   }
