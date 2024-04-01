@@ -154,6 +154,14 @@ XColor create_color(char *hex)
   return color;
 }
 
+XcmsColor create_hvc_color(char *hex)
+{
+  XcmsColor color;
+  Colormap colormap = DefaultColormap(dpy, 0);
+  XcmsAllocNamedColor(dpy, colormap, hex, &color, &color, XcmsTekHVCFormat);
+  return color;
+}
+
 Client* find_client_by_type(Window win, int type) 
 {
   YNode* curr = ylist_head(&clients);
@@ -229,56 +237,54 @@ void remove_client(Client* client) {
   XUngrabServer(dpy);
 }
 
-int resistance_threshold = 50;
-
 int snap_window_right(Rect a, Rect b)
 {
-	int x_distance = a.x + start_window_geom.width + SNAP_BUFFER;
-	return !is_above(a, b) && !is_below(a, b) && (x_distance >= b.x) && (x_distance <= b.x + SNAP_RESISTANCE_THRESHOLD);
+	int x_distance = a.x + start_window_geom.width + config->window_snap_buffer;
+	return !is_above(a, b) && !is_below(a, b) && (x_distance >= b.x) && (x_distance <= b.x + config->window_resistance);
 }
 
 int snap_window_left(Rect a, Rect b)
 {
 	int b_right_edge = b.x + b.width;
-    int x_distance = a.x - SNAP_BUFFER;
-	return !is_above(a, b) && !is_below(a, b) && (x_distance <= b_right_edge) && (x_distance >= b_right_edge - SNAP_RESISTANCE_THRESHOLD);
+    int x_distance = a.x - config->window_snap_buffer;
+	return !is_above(a, b) && !is_below(a, b) && (x_distance <= b_right_edge) && (x_distance >= b_right_edge - config->window_resistance);
 }
 
 int snap_window_top(Rect a, Rect b)
 {
 	int b_bottom_edge = b.y + b.height;
-	int y_distance = a.y - SNAP_BUFFER;
-	return !is_left(a, b) && !is_right(a, b) && (y_distance <= b_bottom_edge) && (y_distance >= b_bottom_edge - SNAP_RESISTANCE_THRESHOLD);
+	int y_distance = a.y - config->window_snap_buffer;
+	return !is_left(a, b) && !is_right(a, b) && (y_distance <= b_bottom_edge) && (y_distance >= b_bottom_edge - config->window_resistance);
 }
 
 int snap_window_bottom(Rect a, Rect b)
 {
-	int y_distance = a.y + start_window_geom.height + SNAP_BUFFER;
-	return !is_left(a, b) && !is_right(a, b) && (y_distance >= b.y) && (y_distance <= b.y + SNAP_RESISTANCE_THRESHOLD);
+	int y_distance = a.y + start_window_geom.height + config->window_snap_buffer;
+	return !is_left(a, b) && !is_right(a, b) && (y_distance >= b.y) && (y_distance <= b.y + config->window_resistance);
 }
 
 int snap_window_screen_right(int x)
 {
-  int x_distance = x + start_window_geom.width + SNAP_BUFFER;
-  return x_distance >= screen_w && x_distance <= screen_w + resistance_threshold;	
+  int x_distance = x + start_window_geom.width + config->edge_snap_buffer;
+  return x_distance >= screen_w && x_distance <= screen_w + config->edge_resistance;	
 }
 
 int snap_window_screen_left(int x)
 {
-  int x_distance = x - SNAP_BUFFER;
-  return x_distance <= 0 && x_distance >= -resistance_threshold;
+  int x_distance = x - config->edge_snap_buffer;
+  return x_distance <= 0 && x_distance >= -config->edge_resistance;
 }
 
 int snap_window_screen_top(int y)
 {
-  int y_distance = y - SNAP_BUFFER;
-  return y_distance <= 0 && y_distance >= -resistance_threshold;
+  int y_distance = y - config->edge_snap_buffer;
+  return y_distance <= 0 && y_distance >= -config->edge_resistance;
 }
 
 int snap_window_screen_bottom(int y)
 {
-  int y_distance = y + start_window_geom.height + SNAP_BUFFER;
-  return y_distance >= screen_h && y_distance <= screen_h + resistance_threshold;
+  int y_distance = y + start_window_geom.height + config->edge_snap_buffer;
+  return y_distance >= screen_h && y_distance <= screen_h + config->edge_resistance;
 }
 
 int is_title_bar(Point p) 

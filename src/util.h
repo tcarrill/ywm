@@ -6,8 +6,11 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <X11/Xlib.h>
+#include <X11/Xcms.h>
+#include <math.h>
 #include "client.h"
 #include "ywm.h"
+#include "config.h"
 
 #define FRAME 0
 #define CLIENT 1
@@ -19,8 +22,8 @@ Client* find_client(Window win);
 void remove_client(Client* c);
 void fork_exec(char *cmd);
 void send_wm_delete(Window window);
+XcmsColor create_hvc_color(char* hex);
 XColor create_color(char* hex);
-XColor create_color_shade(char* hex, float shade);
 void print_client(Client* c);
 int snap_window_screen_right(int x);
 int snap_window_screen_left(int x);
