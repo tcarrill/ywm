@@ -5,7 +5,6 @@
 #define YWM_DIR ".ywm"
 #define CONFIG_FILE "ywmrc"
 
-char ywm_path[PATH_MAX];
 char ywm_config_path[PATH_MAX];
 
 void write_default_config_file() {
@@ -44,7 +43,7 @@ void read_config()
     fp = open_config_file(ywm_config_path);
   }
  
-  config = (Config *)malloc(sizeof(Config));
+  config = (YConfig *)malloc(sizeof(YConfig));
   
   char *line = NULL;
   size_t len = 0;

@@ -36,6 +36,8 @@
 
 #define ButtonMask ButtonPressMask | ButtonReleaseMask
 
+char ywm_path[PATH_MAX];
+
 extern GC focused_light_grey_gc;
 extern GC focused_dark_grey_gc;
 
