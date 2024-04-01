@@ -7,7 +7,6 @@
 #include "util.h"
 #include "ywm.h"
 #include "event.h"
-#include "config.h"
 	
 GC black_gc = NULL;
 GC focused_light_grey_gc = NULL;
