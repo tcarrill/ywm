@@ -61,8 +61,6 @@ enum AtomsWM {
   NumberOfAtoms
 };
 
-XcmsColor menu_title_color;
-
 extern Atom atom_wm[NumberOfAtoms];
 
 extern Point cursor_start_point;
