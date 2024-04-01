@@ -6,6 +6,7 @@
 #include "util.h"
 #include "ylist.h"
 #include "ywm.h"
+#include "config.h"
 
 #define MENU_MAX_WIDTH  175
 #define MENU_ITEM_HEIGHT 22
@@ -24,6 +25,7 @@ typedef struct MenuItem {
   XftDraw *xft_draw;
 } MenuItem;
 
+extern XcmsColor menu_color;
 
 extern XftFont *menu_xft_font;
 extern YList menu_items;

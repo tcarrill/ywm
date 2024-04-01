@@ -7,6 +7,7 @@
 #include "util.h"
 #include "ywm.h"
 #include "event.h"
+#include "config.h"
 	
 GC black_gc = NULL;
 GC focused_light_grey_gc = NULL;
@@ -58,9 +59,18 @@ static void setup_display()
   Screen* screen = XScreenOfDisplay(dpy, XDefaultScreen(dpy));
   screen_w = XWidthOfScreen(screen);
   screen_h = XHeightOfScreen(screen);
-
-  XColor backgroundColor = create_color("#666797");
-  XSetWindowBackground(dpy, root, backgroundColor.pixel);
+  XcmsColor background_color = create_hvc_color(config->background_color);  
+  // fprintf(stderr, "background_color format=%lu\n", background_color.format);
+  // fprintf(stderr, "{%f, %f, %f}\n", background_color.spec.TekHVC.H, background_color.spec.TekHVC.C, background_color.spec.TekHVC.V);
+  XSetWindowBackground(dpy, root, background_color.pixel);
+  //
+  // XcmsTekHVC tekHVC;
+  // tekHVC.H = menu_title_color.spec.TekHVC.H;
+  // tekHVC.C = menu_title_color.spec.TekHVC.C;
+  // tekHVC.V = menu_title_color.spec.TekHVC.V + menu_title_color.spec.TekHVC.V * .1;
+  // XcmsConvertColors(dpy, &tekHVC, &menu_title_color, 1, XcmsTekHVCFormat);
+  //
+  // fprintf(stderr, "{%f, %f, %f}\n", tekHVC.H, tekHVC.C, tekHVC.V);
   
   xft_color.color.red = 0;
   xft_color.color.green = 0;
@@ -408,7 +418,7 @@ void quit()
   XFreeGC(dpy, unfocused_frame_gc);
   XFreeGC(dpy, black_gc);
   XFreeCursor(dpy, pointerCursor);
-
+  free(config);
   ylist_destroy(&clients);
   ylist_destroy(&focus_stack);
   XCloseDisplay(dpy);
@@ -459,6 +469,8 @@ int main(int argc, char *argv[])
 #ifdef DEBUG
   fprintf(stderr, "DEBUG mode is on\n");
 #endif
+
+  read_config();
 
   XEvent ev;
 
