@@ -4,6 +4,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xcms.h>
 #include "client.h"
+#include "config.h"
 
 #define FRAME 0
 #define CLIENT 1

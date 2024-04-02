@@ -13,7 +13,7 @@
 #include "client.h"
 #include "ylist.h"
 #include "ywm.h"
-#include "config.c"
+#include "config.h"
 
 YConfig* config;
 

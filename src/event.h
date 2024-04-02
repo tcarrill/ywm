@@ -3,7 +3,7 @@
 
 #include <X11/Xlib.h>
 #include <X11/cursorfont.h>
-
+#include "config.h"
 
 #define DBL_CLICK_SPEED 350
 extern Time click1_time;

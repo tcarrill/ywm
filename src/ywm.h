@@ -3,6 +3,7 @@
 #include "ylist.h"
 #include "client.h"
 #include "menu.h"
+#include "config.h"
 
 #define YWM_DIR ".ywm"
 
