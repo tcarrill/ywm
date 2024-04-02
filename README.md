@@ -1,7 +1,6 @@
 # ywm
-Ywm is a stacking window manager for X11.  Its UI takes inspiration from Apple's Rhapsody operating system, which grew from NeXTSTEP and would eventually become macOS. 
-![Build Status](https://github.com/tcarrill/ywm/workflows/C%20Project%20Build/badge.svg)
-  
+YWM is a stacking window manager for X11.  It's UI takes inspiration from Apple's Rhapsody operating system, which grew from NeXTSTEP and would eventually become macOS.
+
 ![ywm](img/screenshot.png?raw=true)
 
 ## Usage
