@@ -9,7 +9,6 @@
 Point prev_mouse_xy;
 Time click1_time;
 Time click2_time;
-YConfig* config;
 
 void on_key_press(const XKeyEvent *ev) 
 {
