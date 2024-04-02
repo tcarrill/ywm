@@ -15,6 +15,8 @@
 #include "ywm.h"
 #include "config.c"
 
+YConfig* config;
+
 int is_above(Rect a, Rect b) 
 {
 	if (a.y + a.height < b.y) {

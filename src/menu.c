@@ -22,6 +22,7 @@ GC menu_dark_strip_gc;
 
 XftFont *menu_xft_font = NULL;
 YList menu_items;
+YConfig* config;
 struct timespec remaining, request = { 0, 41666666L }; 
 
 char ywm_menu_path[PATH_MAX];

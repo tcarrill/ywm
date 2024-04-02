@@ -51,6 +51,7 @@ YList focus_stack;
 Atom atom_wm[NumberOfAtoms];
 Bool shape;
 int shape_event;
+YConfig* config;
 
 static void setup_wm_hints() 
 {
