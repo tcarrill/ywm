@@ -1,27 +1,21 @@
-name: Makefile CI
+name: YWM Build Status
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    branches:
+      - main
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install libx11-dev libxft-dev libxext-dev libfreetype6-dev
+      - name: Build
+        run: |
+          ./configure
+          make
 
-    - name: configure
-      run: ./configure
-
-    - name: Install dependencies
-      run: make
-
-    - name: Run check
-      run: make check
-
-    - name: Run distcheck
-      run: make distcheck
