@@ -3,6 +3,7 @@
 #include <time.h>
 #include "menu.h"
 #include "ywm.h"
+#include "config.h"
 
 #define TITLE_BAR_HEIGHT 22
 

@@ -26,7 +26,7 @@ typedef struct MenuItem {
 } MenuItem;
 
 extern XcmsColor menu_color;
-
+extern YConfig* config;
 extern XftFont *menu_xft_font;
 extern YList menu_items;
 

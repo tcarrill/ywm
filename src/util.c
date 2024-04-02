@@ -13,6 +13,7 @@
 #include "client.h"
 #include "ylist.h"
 #include "ywm.h"
+#include "config.c"
 
 int is_above(Rect a, Rect b) 
 {

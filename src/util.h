@@ -10,6 +10,8 @@
 #define CLOSE_BTN 2
 #define SHADE_BTN 3
 
+extern YConfig* config;
+
 Client* find_client_by_type(Window win, int type);
 Client* find_client(Window win);
 void remove_client(Client* c);
