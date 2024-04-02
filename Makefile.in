@@ -106,7 +106,7 @@ PROGRAMS = $(bin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
 am_ywm_OBJECTS = src/ywm-ywm.$(OBJEXT) src/ywm-event.$(OBJEXT) \
 	src/ywm-menu.$(OBJEXT) src/ywm-util.$(OBJEXT) \
-	src/ywm-ylist.$(OBJEXT)
+	src/ywm-ylist.$(OBJEXT) src/ywm-config.$(OBJEXT)
 ywm_OBJECTS = $(am_ywm_OBJECTS)
 am__DEPENDENCIES_1 =
 ywm_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
@@ -126,9 +126,10 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = src/$(DEPDIR)/ywm-event.Po \
-	src/$(DEPDIR)/ywm-menu.Po src/$(DEPDIR)/ywm-util.Po \
-	src/$(DEPDIR)/ywm-ylist.Po src/$(DEPDIR)/ywm-ywm.Po
+am__depfiles_remade = src/$(DEPDIR)/ywm-config.Po \
+	src/$(DEPDIR)/ywm-event.Po src/$(DEPDIR)/ywm-menu.Po \
+	src/$(DEPDIR)/ywm-util.Po src/$(DEPDIR)/ywm-ylist.Po \
+	src/$(DEPDIR)/ywm-ywm.Po
 am__mv = mv -f
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -364,7 +365,7 @@ top_srcdir = @top_srcdir@
 dist_doc_DATA = README.md LICENSE
 EXTRA_DIST = autogen.sh
 SUBDIRS = src
-ywm_SOURCES = src/ywm.c src/event.c src/menu.c src/util.c src/ylist.c
+ywm_SOURCES = src/ywm.c src/event.c src/menu.c src/util.c src/ylist.c src/config.c
 ywm_CPPFLAGS = -I$(srcdir) $(X11_CFLAGS) $(XEXT_CFLAGS) $(XFT_CFLAGS) $(FREETYPE_CFLAGS) -DSHAPE -DXFT
 ywm_LDADD = $(X11_LIBS) $(XEXT_LIBS) $(XFT_LIBS) $(FREETYPE_LIBS)
 all: config.h
@@ -478,6 +479,8 @@ src/ywm-util.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/ywm-ylist.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/ywm-config.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 
 ywm$(EXEEXT): $(ywm_OBJECTS) $(ywm_DEPENDENCIES) $(EXTRA_ywm_DEPENDENCIES) 
 	@rm -f ywm$(EXEEXT)
@@ -490,6 +493,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/ywm-config.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/ywm-event.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/ywm-menu.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/ywm-util.Po@am__quote@ # am--include-marker
@@ -587,6 +591,20 @@ src/ywm-ylist.obj: src/ylist.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/ylist.c' object='src/ywm-ylist.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ywm_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/ywm-ylist.obj `if test -f 'src/ylist.c'; then $(CYGPATH_W) 'src/ylist.c'; else $(CYGPATH_W) '$(srcdir)/src/ylist.c'; fi`
+
+src/ywm-config.o: src/config.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ywm_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/ywm-config.o -MD -MP -MF src/$(DEPDIR)/ywm-config.Tpo -c -o src/ywm-config.o `test -f 'src/config.c' || echo '$(srcdir)/'`src/config.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/ywm-config.Tpo src/$(DEPDIR)/ywm-config.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/config.c' object='src/ywm-config.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ywm_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/ywm-config.o `test -f 'src/config.c' || echo '$(srcdir)/'`src/config.c
+
+src/ywm-config.obj: src/config.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ywm_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT src/ywm-config.obj -MD -MP -MF src/$(DEPDIR)/ywm-config.Tpo -c -o src/ywm-config.obj `if test -f 'src/config.c'; then $(CYGPATH_W) 'src/config.c'; else $(CYGPATH_W) '$(srcdir)/src/config.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/ywm-config.Tpo src/$(DEPDIR)/ywm-config.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/config.c' object='src/ywm-config.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ywm_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o src/ywm-config.obj `if test -f 'src/config.c'; then $(CYGPATH_W) 'src/config.c'; else $(CYGPATH_W) '$(srcdir)/src/config.c'; fi`
 install-dist_docDATA: $(dist_doc_DATA)
 	@$(NORMAL_INSTALL)
 	@list='$(dist_doc_DATA)'; test -n "$(docdir)" || list=; \
@@ -955,7 +973,8 @@ clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-		-rm -f src/$(DEPDIR)/ywm-event.Po
+		-rm -f src/$(DEPDIR)/ywm-config.Po
+	-rm -f src/$(DEPDIR)/ywm-event.Po
 	-rm -f src/$(DEPDIR)/ywm-menu.Po
 	-rm -f src/$(DEPDIR)/ywm-util.Po
 	-rm -f src/$(DEPDIR)/ywm-ylist.Po
@@ -1007,7 +1026,8 @@ installcheck-am:
 maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-		-rm -f src/$(DEPDIR)/ywm-event.Po
+		-rm -f src/$(DEPDIR)/ywm-config.Po
+	-rm -f src/$(DEPDIR)/ywm-event.Po
 	-rm -f src/$(DEPDIR)/ywm-menu.Po
 	-rm -f src/$(DEPDIR)/ywm-util.Po
 	-rm -f src/$(DEPDIR)/ywm-ylist.Po
