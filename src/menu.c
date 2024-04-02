@@ -175,15 +175,18 @@ static void draw_menu_item(MenuItem* menu_item, int flash) {
   XDrawLine(dpy, menu_btn, unfocused_dark_grey_gc, width - 1, 1, width - 1, height - 1);
   XDrawLine(dpy, menu_btn, XDefaultGC(dpy, DefaultScreen(dpy)), width, 0, width, height);
   XDrawLine(dpy, menu_btn, XDefaultGC(dpy, DefaultScreen(dpy)), 0, height, width, height);
+  
   if (flash) {
     XFillRectangle(dpy, menu_btn, flash_gc, 0, 0, width - 1, height - 2);
   } else {
     XFillRectangle(dpy, menu_btn, focused_frame_gc, 2, 2, width - 3, height - 3);
   }
+  
   if (strlen(menu_item->label) > 0) {
 	  xft_color.color.alpha = 65535;
       XftDrawString8(menu_item->xft_draw, &xft_color, menu_xft_font, 7, 15, (unsigned char *)menu_item->label, strlen(menu_item->label));
   }	
+  
 }
 
 void draw_menu() {	
