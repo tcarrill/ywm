@@ -288,7 +288,7 @@ void on_unmap_notify(const XUnmapEvent* ev)
 void on_enter_notify(const XCrossingEvent* ev)
 {
   focused_client = find_client(ev->window);
-	
+  XSetInputFocus(dpy, ev->window, RevertToPointerRoot, CurrentTime);
   YNode *curr = ylist_head(&clients);
   while (curr != NULL) {
     Client *client = (Client *)ylist_data(curr);
