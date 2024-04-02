@@ -480,8 +480,11 @@ int main(int argc, char *argv[])
 #ifdef DEBUG
   fprintf(stderr, "DEBUG mode is on\n");
 #endif
-  snprintf(ywm_path, sizeof(ywm_path), "%s/%s", getenv("HOME"), YWM_DIR);  
-
+  int ret = snprintf(ywm_path, sizeof(ywm_path), "%s/%s", getenv("HOME"), YWM_DIR);  
+  if (ret < 0) {
+      printf("Error getting the YWM directory path\n");
+      exit(EXIT_FAILURE);
+  }
   read_config();
 
   XEvent ev;

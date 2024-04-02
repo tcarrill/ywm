@@ -93,7 +93,12 @@ Window create_menu()
   gcv.foreground = create_color(MENU_TITLE_DARK_STRIP).pixel;
   menu_dark_strip_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);
   
-  snprintf(ywm_menu_path, sizeof(ywm_menu_path), "%s/%s", ywm_path, MENU_FILE);
+  int ret = snprintf(ywm_menu_path, sizeof(ywm_menu_path), "%s/%s", ywm_path, MENU_FILE);
+  if (ret < 0) {
+      printf("Error getting the YWM menu directory path\n");
+      exit(EXIT_FAILURE);
+  }
+  
   FILE *fp = open_menu_file(ywm_menu_path);
   if (fp == NULL) {
     fprintf(stderr, "Cannot open %s, creating default menu\n", ywm_menu_path);

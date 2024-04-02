@@ -38,7 +38,12 @@ FILE* open_config_file(char *path)
 
 void read_config()
 {	
-  snprintf(ywm_config_path, sizeof(ywm_config_path), "%s/%s", ywm_path, CONFIG_FILE);
+  int ret = snprintf(ywm_config_path, sizeof(ywm_config_path), "%s/%s", ywm_path, CONFIG_FILE);
+  if (ret < 0) {
+      printf("Error getting the YWM config directory path\n");
+      exit(EXIT_FAILURE);
+  }
+  
   FILE *fp = open_config_file(ywm_config_path);
   if (fp == NULL) {
     fprintf(stderr, "Cannot open %s, creating default config\n", ywm_config_path);
