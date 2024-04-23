@@ -15,6 +15,12 @@
 #include "ywm.h"
 #include "config.h"
 
+FILE* open_file(char *path) 
+{
+  FILE *fp = fopen(path, "r");
+  return fp;
+}
+
 int is_above(Rect a, Rect b) 
 {
 	if (a.y + a.height < b.y) {
