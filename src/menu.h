@@ -34,4 +34,5 @@ Window create_menu();
 void draw_menu();
 void free_menu();
 void flash_menu(MenuItem* menu_item);
+void *poll_menu_file(void *ptr);
 #endif

@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <pthread.h>
 #include <X11/cursorfont.h>
 #include <X11/Xft/Xft.h>
 #ifdef SHAPE
@@ -91,8 +92,7 @@ static void setup_display()
   xft_color.pixel = 0;
 
   title_xft_font = XftFontOpenName(dpy, DefaultScreen(dpy), "Arial-10:bold");
-  if (title_xft_font == NULL)
-  {
+  if (title_xft_font == NULL) {
   	printf("font '%s' not found", "Arial-10:bold");
    	exit(EXIT_FAILURE);
   }
@@ -199,13 +199,13 @@ void draw_window_titlebar(Client *client, Rect initial_window)
 	
   if (client->title != NULL) {
     int title_len = strlen(client->title);
-	XGlyphInfo *extents = malloc(sizeof(XGlyphInfo));
-	XftTextExtents8(dpy, title_xft_font, (unsigned char *)client->title, title_len, extents);
-	int title_width = extents->width;
+	  XGlyphInfo *extents = malloc(sizeof(XGlyphInfo));
+	  XftTextExtents8(dpy, title_xft_font, (unsigned char *)client->title, title_len, extents);
+	  int title_width = extents->width;
     int titlex = (initial_window.width / 2) - (title_width / 2);
 		
     if (client == focused_client) {
-	  xft_color.color.alpha = 65535;
+	    xft_color.color.alpha = 65535;
       int left_xend_light = titlex - 10;
       int right_xstart_light = titlex + title_width + 7;
       int right_xend_light = initial_window.width - 23;
@@ -225,7 +225,7 @@ void draw_window_titlebar(Client *client, Rect initial_window)
         }
       }
     } else {
-		xft_color.color.alpha = 32768;
+		  xft_color.color.alpha = 32768;
     }
 	
     XftDrawString8(client->xft_draw, &xft_color, title_xft_font, titlex, 14, (unsigned char *)client->title, title_len);
@@ -409,10 +409,9 @@ void unframe(Window win)
   if (client != NULL) {
 	XftDrawDestroy(client->xft_draw);
     XReparentWindow(dpy, client->client, root, 0, 0);
-    XRemoveFromSaveSet(dpy, client->client);
-	
+    XRemoveFromSaveSet(dpy, client->client);	
     XUnmapWindow(dpy, client->close_button);
-	XUnmapWindow(dpy, client->shade_button);
+	  XUnmapWindow(dpy, client->shade_button);
     XUnmapWindow(dpy, client->frame);
   }
 }
@@ -483,8 +482,8 @@ int main(int argc, char *argv[])
 #endif
   int ret = snprintf(ywm_path, sizeof(ywm_path), "%s/%s", getenv("HOME"), YWM_DIR);  
   if (ret < 0) {
-      printf("Error getting the YWM directory path\n");
-      exit(EXIT_FAILURE);
+    printf("Error getting the YWM directory path\n");
+    exit(EXIT_FAILURE);
   }
   read_config();
 
@@ -505,6 +504,8 @@ int main(int argc, char *argv[])
   ylist_init(&clients, free);
   ylist_init(&focus_stack, free);
   root_menu = create_menu();
+  pthread_t thread1;
+	pthread_create( &thread1, NULL, poll_menu_file, &root_menu);
 
   XSelectInput(dpy, root, SubstructureRedirectMask | SubstructureNotifyMask | ButtonMask);
 

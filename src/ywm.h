@@ -26,8 +26,6 @@
 #define UNFOCUSED_LIGHT_GREY "#eaeaea"
 #define UNFOCUSED_DARK_GREY "#767676"
 
-#define SPACE 3
-
 #define ButtonMask ButtonPressMask | ButtonReleaseMask
 
 extern char ywm_path[PATH_MAX];
