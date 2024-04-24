@@ -88,6 +88,7 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 bin_PROGRAMS = ywm$(EXEEXT)
+@DEBUG_TRUE@am__append_1 = -g -DDEBUG
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -366,7 +367,8 @@ dist_doc_DATA = README.md LICENSE
 EXTRA_DIST = autogen.sh
 SUBDIRS = src
 ywm_SOURCES = src/ywm.c src/event.c src/menu.c src/util.c src/ylist.c src/config.c
-ywm_CPPFLAGS = -I$(srcdir) $(X11_CFLAGS) $(XEXT_CFLAGS) $(XFT_CFLAGS) $(FREETYPE_CFLAGS) -DSHAPE -DXFT -pthread
+ywm_CPPFLAGS = -I$(srcdir) $(X11_CFLAGS) $(XEXT_CFLAGS) $(XFT_CFLAGS) \
+	$(FREETYPE_CFLAGS) -DSHAPE -DXFT -pthread $(am__append_1)
 ywm_LDADD = $(X11_LIBS) $(XEXT_LIBS) $(XFT_LIBS) $(FREETYPE_LIBS) -lpthread
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
@@ -1072,6 +1074,10 @@ uninstall-am: uninstall-binPROGRAMS uninstall-dist_docDATA
 
 .PRECIOUS: Makefile
 
+
+.PHONE: debug
+debug:
+	$(MAKE) all DEBUG=1
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

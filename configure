@@ -640,6 +640,8 @@ CPPFLAGS
 LDFLAGS
 CFLAGS
 CC
+DEBUG_FALSE
+DEBUG_TRUE
 AM_BACKSLASH
 AM_DEFAULT_VERBOSITY
 AM_DEFAULT_V
@@ -2919,6 +2921,14 @@ END
   fi
 fi
 
+ if test "x$DEBUG" = "x1"; then
+  DEBUG_TRUE=
+  DEBUG_FALSE='#'
+else
+  DEBUG_TRUE='#'
+  DEBUG_FALSE=
+fi
+
 
 
 
@@ -4837,6 +4847,10 @@ else
   am__EXEEXT_FALSE=
 fi
 
+if test -z "${DEBUG_TRUE}" && test -z "${DEBUG_FALSE}"; then
+  as_fn_error $? "conditional \"DEBUG\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${AMDEP_TRUE}" && test -z "${AMDEP_FALSE}"; then
   as_fn_error $? "conditional \"AMDEP\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
