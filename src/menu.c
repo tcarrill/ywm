@@ -1,13 +1,15 @@
 #include <sys/stat.h>
 #include <limits.h>
 #include <time.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "menu.h"
 #include "ywm.h"
 #include "config.h"
+#include "util.h"
 
 #define TITLE_BAR_HEIGHT 22
 
-#define MENU_TITLE_COLOR "#999aba"
 #define MENU_TITLE_LIGHT_STRIP "#bfbfcc"
 #define MENU_TITLE_DARK_STRIP "#5d5d68"
 #define MENU_BG_COLOR "#AAAAAA"
@@ -68,17 +70,19 @@ MenuItem* menuItem_new(char *label, char *command, Window win)
   return menuItem;
 }
 
-FILE* open_menu_file(char *path) 
+void create_menu_title_gc() 
 {
-  FILE *fp = fopen(path, "r");
-  return fp;
+  XGCValues gcv;
+  gcv.function = GXcopy;
+  
+  gcv.foreground =  create_color(config->menu_title_color).pixel;
+  menu_title_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);
 }
 
 Window create_menu()
 {	
   menu_xft_font = XftFontOpenName(dpy, DefaultScreen(dpy), "Arial-10:medium");
-  if (menu_xft_font == NULL)
-  {
+  if (menu_xft_font == NULL) {
     printf("font '%s' not found", "Arial-10:medium");
     exit(EXIT_FAILURE);
   }
@@ -88,10 +92,12 @@ Window create_menu()
 
   gcv.foreground = create_color(FLASH_COLOR).pixel;
   flash_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);  
-  gcv.foreground =  create_color(config->menu_title_color).pixel;
-  menu_title_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);
+  
+  create_menu_title_gc();
+  
   gcv.foreground = create_color(MENU_TITLE_LIGHT_STRIP).pixel;
   menu_light_strip_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);
+  
   gcv.foreground = create_color(MENU_TITLE_DARK_STRIP).pixel;
   menu_dark_strip_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);
   
@@ -101,11 +107,11 @@ Window create_menu()
       exit(EXIT_FAILURE);
   }
   
-  FILE *fp = open_menu_file(ywm_menu_path);
+  FILE *fp = open_file(ywm_menu_path);
   if (fp == NULL) {
     fprintf(stderr, "Cannot open %s, creating default menu\n", ywm_menu_path);
     write_default_menu_file();
-    fp = open_menu_file(ywm_menu_path);
+    fp = open_file(ywm_menu_path);
   }
    	
   int menu_size = 0;
@@ -227,4 +233,30 @@ void free_menu() {
   XFreeGC(dpy, menu_light_strip_gc);
   XFreeGC(dpy, menu_dark_strip_gc);
   XDestroyWindow(dpy, root_menu);
+}
+
+void *poll_menu_file(void *ptr)
+{
+  Window *root_menu = (Window *) ptr;
+  fprintf(stderr, "Starting menu file polling thread\n");
+  struct stat file_stat;
+	time_t last_modified_time = 0;
+
+	if (stat(ywm_menu_path, &file_stat) == 0) {
+		last_modified_time = file_stat.st_mtime;
+	}
+	
+	while (1) {
+	    if (stat(ywm_menu_path, &file_stat) == 0) {
+	        if (file_stat.st_mtime != last_modified_time) {
+				    last_modified_time = file_stat.st_mtime;
+		        fprintf(stderr, "Menu updated\n");
+            free_menu();
+            *root_menu = create_menu();
+	        }
+	    } else {
+	        fprintf(stderr, "Error getting file information: %s\n", ywm_menu_path);
+	    }	
+		sleep(1);
+	}
 }

@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <pthread.h>
 #include <X11/cursorfont.h>
 #include <X11/Xft/Xft.h>
 #ifdef SHAPE
@@ -59,9 +60,16 @@ static void setup_wm_hints()
   atom_wm[AtomWMDeleteWindow] = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
 }
 
+void set_background()
+{
+  XcmsColor background_color = create_hvc_color(config->background_color);  
+  XSetWindowBackground(dpy, root, background_color.pixel);
+  XClearWindow(dpy, root);
+  XFlush(dpy);
+}
+
 static void setup_display() 
 {
-  
   if (!(dpy = XOpenDisplay(0x0))) {
     fprintf(stderr, "Unable to open display\n");
     exit(EXIT_FAILURE);
@@ -71,19 +79,8 @@ static void setup_display()
   Screen* screen = XScreenOfDisplay(dpy, XDefaultScreen(dpy));
   screen_w = XWidthOfScreen(screen);
   screen_h = XHeightOfScreen(screen);
-  XcmsColor background_color = create_hvc_color(config->background_color);  
-  // fprintf(stderr, "background_color format=%lu\n", background_color.format);
-  // fprintf(stderr, "{%f, %f, %f}\n", background_color.spec.TekHVC.H, background_color.spec.TekHVC.C, background_color.spec.TekHVC.V);
-  XSetWindowBackground(dpy, root, background_color.pixel);
-  //
-  // XcmsTekHVC tekHVC;
-  // tekHVC.H = menu_title_color.spec.TekHVC.H;
-  // tekHVC.C = menu_title_color.spec.TekHVC.C;
-  // tekHVC.V = menu_title_color.spec.TekHVC.V + menu_title_color.spec.TekHVC.V * .1;
-  // XcmsConvertColors(dpy, &tekHVC, &menu_title_color, 1, XcmsTekHVCFormat);
-  //
-  // fprintf(stderr, "{%f, %f, %f}\n", tekHVC.H, tekHVC.C, tekHVC.V);
-  
+  set_background();
+
   xft_color.color.red = 0;
   xft_color.color.green = 0;
   xft_color.color.blue = 0;
@@ -91,8 +88,7 @@ static void setup_display()
   xft_color.pixel = 0;
 
   title_xft_font = XftFontOpenName(dpy, DefaultScreen(dpy), "Arial-10:bold");
-  if (title_xft_font == NULL)
-  {
+  if (title_xft_font == NULL) {
   	printf("font '%s' not found", "Arial-10:bold");
    	exit(EXIT_FAILURE);
   }
@@ -199,13 +195,13 @@ void draw_window_titlebar(Client *client, Rect initial_window)
 	
   if (client->title != NULL) {
     int title_len = strlen(client->title);
-	XGlyphInfo *extents = malloc(sizeof(XGlyphInfo));
-	XftTextExtents8(dpy, title_xft_font, (unsigned char *)client->title, title_len, extents);
-	int title_width = extents->width;
+	  XGlyphInfo *extents = malloc(sizeof(XGlyphInfo));
+	  XftTextExtents8(dpy, title_xft_font, (unsigned char *)client->title, title_len, extents);
+	  int title_width = extents->width;
     int titlex = (initial_window.width / 2) - (title_width / 2);
 		
     if (client == focused_client) {
-	  xft_color.color.alpha = 65535;
+	    xft_color.color.alpha = 65535;
       int left_xend_light = titlex - 10;
       int right_xstart_light = titlex + title_width + 7;
       int right_xend_light = initial_window.width - 23;
@@ -225,7 +221,7 @@ void draw_window_titlebar(Client *client, Rect initial_window)
         }
       }
     } else {
-		xft_color.color.alpha = 32768;
+		  xft_color.color.alpha = 32768;
     }
 	
     XftDrawString8(client->xft_draw, &xft_color, title_xft_font, titlex, 14, (unsigned char *)client->title, title_len);
@@ -409,10 +405,9 @@ void unframe(Window win)
   if (client != NULL) {
 	XftDrawDestroy(client->xft_draw);
     XReparentWindow(dpy, client->client, root, 0, 0);
-    XRemoveFromSaveSet(dpy, client->client);
-	
+    XRemoveFromSaveSet(dpy, client->client);	
     XUnmapWindow(dpy, client->close_button);
-	XUnmapWindow(dpy, client->shade_button);
+	  XUnmapWindow(dpy, client->shade_button);
     XUnmapWindow(dpy, client->frame);
   }
 }
@@ -483,8 +478,8 @@ int main(int argc, char *argv[])
 #endif
   int ret = snprintf(ywm_path, sizeof(ywm_path), "%s/%s", getenv("HOME"), YWM_DIR);  
   if (ret < 0) {
-      printf("Error getting the YWM directory path\n");
-      exit(EXIT_FAILURE);
+    printf("Error getting the YWM directory path\n");
+    exit(EXIT_FAILURE);
   }
   read_config();
 
@@ -505,6 +500,10 @@ int main(int argc, char *argv[])
   ylist_init(&clients, free);
   ylist_init(&focus_stack, free);
   root_menu = create_menu();
+  pthread_t menu_poll_thread;
+	pthread_create( &menu_poll_thread, NULL, poll_menu_file, &root_menu);
+  pthread_t config_poll_thread;
+  pthread_create( &config_poll_thread, NULL, poll_config_file, NULL);
 
   XSelectInput(dpy, root, SubstructureRedirectMask | SubstructureNotifyMask | ButtonMask);
 

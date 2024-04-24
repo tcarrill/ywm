@@ -39,4 +39,5 @@ int is_resize_frame(Point point);
 int handle_xerror(Display *dpy, XErrorEvent *e);
 void print_event(XEvent ev);
 int mkdir_p(const char *path);
+FILE* open_file(char *path);
 #endif
