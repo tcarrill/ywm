@@ -60,9 +60,16 @@ static void setup_wm_hints()
   atom_wm[AtomWMDeleteWindow] = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
 }
 
+void set_background()
+{
+  XcmsColor background_color = create_hvc_color(config->background_color);  
+  XSetWindowBackground(dpy, root, background_color.pixel);
+  XClearWindow(dpy, root);
+  XFlush(dpy);
+}
+
 static void setup_display() 
 {
-  
   if (!(dpy = XOpenDisplay(0x0))) {
     fprintf(stderr, "Unable to open display\n");
     exit(EXIT_FAILURE);
@@ -72,19 +79,8 @@ static void setup_display()
   Screen* screen = XScreenOfDisplay(dpy, XDefaultScreen(dpy));
   screen_w = XWidthOfScreen(screen);
   screen_h = XHeightOfScreen(screen);
-  XcmsColor background_color = create_hvc_color(config->background_color);  
-  // fprintf(stderr, "background_color format=%lu\n", background_color.format);
-  // fprintf(stderr, "{%f, %f, %f}\n", background_color.spec.TekHVC.H, background_color.spec.TekHVC.C, background_color.spec.TekHVC.V);
-  XSetWindowBackground(dpy, root, background_color.pixel);
-  //
-  // XcmsTekHVC tekHVC;
-  // tekHVC.H = menu_title_color.spec.TekHVC.H;
-  // tekHVC.C = menu_title_color.spec.TekHVC.C;
-  // tekHVC.V = menu_title_color.spec.TekHVC.V + menu_title_color.spec.TekHVC.V * .1;
-  // XcmsConvertColors(dpy, &tekHVC, &menu_title_color, 1, XcmsTekHVCFormat);
-  //
-  // fprintf(stderr, "{%f, %f, %f}\n", tekHVC.H, tekHVC.C, tekHVC.V);
-  
+  set_background();
+
   xft_color.color.red = 0;
   xft_color.color.green = 0;
   xft_color.color.blue = 0;
@@ -504,8 +500,10 @@ int main(int argc, char *argv[])
   ylist_init(&clients, free);
   ylist_init(&focus_stack, free);
   root_menu = create_menu();
-  pthread_t thread1;
-	pthread_create( &thread1, NULL, poll_menu_file, &root_menu);
+  pthread_t menu_poll_thread;
+	pthread_create( &menu_poll_thread, NULL, poll_menu_file, &root_menu);
+  pthread_t config_poll_thread;
+  pthread_create( &config_poll_thread, NULL, poll_config_file, NULL);
 
   XSelectInput(dpy, root, SubstructureRedirectMask | SubstructureNotifyMask | ButtonMask);
 

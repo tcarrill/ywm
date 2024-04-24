@@ -78,4 +78,5 @@ void redraw(Client *client);
 void handle_shading(Client *);
 void shade(Client *);
 void unshade(Client *);
+void set_background();
 #endif

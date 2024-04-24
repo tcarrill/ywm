@@ -10,7 +10,6 @@
 
 #define TITLE_BAR_HEIGHT 22
 
-#define MENU_TITLE_COLOR "#999aba"
 #define MENU_TITLE_LIGHT_STRIP "#bfbfcc"
 #define MENU_TITLE_DARK_STRIP "#5d5d68"
 #define MENU_BG_COLOR "#AAAAAA"
@@ -71,6 +70,11 @@ MenuItem* menuItem_new(char *label, char *command, Window win)
   return menuItem;
 }
 
+void create_menu_items()
+{
+
+}
+
 Window create_menu()
 {	
   menu_xft_font = XftFontOpenName(dpy, DefaultScreen(dpy), "Arial-10:medium");
@@ -84,10 +88,13 @@ Window create_menu()
 
   gcv.foreground = create_color(FLASH_COLOR).pixel;
   flash_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);  
+  
   gcv.foreground =  create_color(config->menu_title_color).pixel;
   menu_title_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);
+  
   gcv.foreground = create_color(MENU_TITLE_LIGHT_STRIP).pixel;
   menu_light_strip_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);
+  
   gcv.foreground = create_color(MENU_TITLE_DARK_STRIP).pixel;
   menu_dark_strip_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);
   
@@ -240,12 +247,12 @@ void *poll_menu_file(void *ptr)
 	    if (stat(ywm_menu_path, &file_stat) == 0) {
 	        if (file_stat.st_mtime != last_modified_time) {
 				    last_modified_time = file_stat.st_mtime;
-		        fprintf(stderr, "file updated\n");
+		        fprintf(stderr, "Menu updated\n");
             free_menu();
             *root_menu = create_menu();
 	        }
 	    } else {
-	        printf("Error getting file information: %s\n", ywm_menu_path);
+	        fprintf(stderr, "Error getting file information: %s\n", ywm_menu_path);
 	    }	
 		sleep(1);
 	}

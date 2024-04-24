@@ -2,6 +2,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "config.h"
 #include "util.h"
 #include "ywm.h"
@@ -34,7 +35,7 @@ void read_config()
 {	
   int ret = snprintf(ywm_config_path, sizeof(ywm_config_path), "%s/%s", ywm_path, CONFIG_FILE);
   if (ret < 0) {
-    printf("Error getting the YWM config directory path\n");
+    fprintf(stderr, "Error getting the YWM config directory path\n");
     exit(EXIT_FAILURE);
   }
   
@@ -86,4 +87,30 @@ void read_config()
   }
   
   fclose(fp);	
+}
+
+void *poll_config_file()
+{
+  fprintf(stderr, "Starting config file polling thread\n");
+  struct stat file_stat;
+	time_t last_modified_time = 0;
+
+	if (stat(ywm_config_path, &file_stat) == 0) {
+		last_modified_time = file_stat.st_mtime;
+	}
+	
+	while (1) {
+	    if (stat(ywm_config_path, &file_stat) == 0) {
+	        if (file_stat.st_mtime != last_modified_time) {
+				    last_modified_time = file_stat.st_mtime;
+		        fprintf(stderr, "Config updated\n");
+            free(config);
+            read_config();
+            set_background();
+	        }
+	    } else {
+	        fprintf(stderr, "Error getting file information: %s\n", ywm_config_path);
+	    }	
+		sleep(1);
+	}
 }
