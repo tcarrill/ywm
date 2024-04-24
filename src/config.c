@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "config.h"
+#include "menu.h"
 #include "util.h"
 #include "ywm.h"
 
@@ -106,6 +107,7 @@ void *poll_config_file()
 		        fprintf(stderr, "Config updated\n");
             free(config);
             read_config();
+            create_menu_title_gc();
             set_background();
 	        }
 	    } else {

@@ -70,9 +70,13 @@ MenuItem* menuItem_new(char *label, char *command, Window win)
   return menuItem;
 }
 
-void create_menu_items()
+void create_menu_title_gc() 
 {
-
+  XGCValues gcv;
+  gcv.function = GXcopy;
+  
+  gcv.foreground =  create_color(config->menu_title_color).pixel;
+  menu_title_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);
 }
 
 Window create_menu()
@@ -89,8 +93,7 @@ Window create_menu()
   gcv.foreground = create_color(FLASH_COLOR).pixel;
   flash_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);  
   
-  gcv.foreground =  create_color(config->menu_title_color).pixel;
-  menu_title_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);
+  create_menu_title_gc();
   
   gcv.foreground = create_color(MENU_TITLE_LIGHT_STRIP).pixel;
   menu_light_strip_gc = XCreateGC(dpy, root, GCFunction|GCForeground, &gcv);
