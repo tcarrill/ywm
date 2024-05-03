@@ -5,7 +5,7 @@ YWM is a stacking window manager for X11.  It's UI takes inspiration from Apple'
 
 ![ywm](img/screenshot.png?raw=true)
 
-## Dependencies
+## Building YWM
 The following libraries are required to build YWM\
 X11, Xft, Xext, Freetype
 
