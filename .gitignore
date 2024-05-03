@@ -21,6 +21,15 @@ autom4te.cache/
 config.status
 config.log
 Makefile
+Makefile.in
+autogen.sh
+aclocal.m4
+compile
+config.h.in
+configure
+depcomp
+install-sh
+missing
 *.in~
 *~
 
