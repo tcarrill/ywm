@@ -14,6 +14,13 @@ They can be installed in a Debian based distribution as follows
 sudo apt-get update
 sudo apt-get install libx11-dev libxft-dev libxext-dev libfreetype6-dev
 ```
+After dependencies are installed, build YWM as follows
+```
+autoreconf --install
+./configure
+make
+make install
+```
 
 ## Usage
 Right mouse button anywhere but a window will show the root menu.
