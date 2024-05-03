@@ -16,7 +16,7 @@ jobs:
           sudo apt-get install libx11-dev libxft-dev libxext-dev libfreetype6-dev
       - name: Build
         run: |
-          autogen --install
+          autoreconf --install
           ./configure
           make
 
