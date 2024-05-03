@@ -1,5 +1,6 @@
 AC_INIT([ywm], [20201209], [Thomas Carrill])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects dist-xz dist-bzip2])
+AM_CONDITIONAL([DEBUG], [test "x$DEBUG" = "x1"])
 AC_CONFIG_SRCDIR([src/ywm.c])
 AC_PROG_CC
 

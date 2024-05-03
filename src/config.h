@@ -13,4 +13,5 @@ typedef struct {
 extern YConfig* config;
 
 void read_config();
+void *poll_config_file();
 #endif
