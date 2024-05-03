@@ -40,7 +40,7 @@ Xman|xman
 Exit ywm|killall ywm
 ```
 ## Configuration
-Configuration is handled by a simple properties file ~/.ywm/ywmrc.  The default file is shown below, changes to this file require a restart of YWM.  
+Configuration is handled by a simple properties file ~/.ywm/ywmrc.  The default file is shown below.  
 
 ```
 background_color=#666797
