@@ -5,6 +5,7 @@
 
 #include <wlr/interfaces/wlr_buffer.h>
 #include <wlr/types/wlr_buffer.h>
+#include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_scene.h>
 #include <wlr/types/wlr_xdg_shell.h>
 
@@ -107,6 +108,14 @@ bool view_hit_shade(const struct ywm_view *view, double lx, double ly) {
            ly >= sby && ly < sby + BTN_SIZE;
 }
 
+bool view_hit_minimize(const struct ywm_view *view, double lx, double ly) {
+    int cw  = client_width(view);
+    int mbx = view->x - BORDER_WIDTH + (cw - 24);
+    int mby = view->y - TITLE_BAR_HEIGHT + BTN_TOP_FW_Y;
+    return lx >= mbx && lx < mbx + BTN_SIZE &&
+           ly >= mby && ly < mby + BTN_SIZE;
+}
+
 bool view_hit_titlebar(const struct ywm_view *view, double lx, double ly) {
     int cw  = client_width(view);
     int fw  = cw + 2 * BORDER_WIDTH + 2 * X_BORDER_WIDTH;
@@ -172,9 +181,11 @@ uint32_t view_hit_resize(const struct ywm_view *view, double lx, double ly) {
      inner dark  : bottom row 10, right col 10
      face fill   : frame color
    shade-only extra: two horizontal black lines at rows 5 and 7
+   minimize-only extra: 4×4 filled black square at upper-left (rows 2-5, cols 2-5)
+   btn_type: 0=close, 1=shade, 2=minimize
    ═══════════════════════════════════════════════════════════════════════════ */
 
-static void draw_button(cairo_t *cr, double bx, double by, bool shade,
+static void draw_button(cairo_t *cr, double bx, double by, int btn_type,
                         double lc, double dc) {
     /* face fill — vertical gradient: light at top, face colour at bottom */
     cairo_pattern_t *pat =
@@ -225,12 +236,20 @@ static void draw_button(cairo_t *cr, double bx, double by, bool shade,
     cairo_rectangle(cr, bx + BTN_SIZE - 3, by + 2,  1, BTN_SIZE - 4);
     cairo_fill(cr);
 
-    /* shade-button horizontal lines at rows 5 and 7 */
-    if (shade) {
-        cairo_set_source_rgb(cr, 0, 0, 0);
+    cairo_set_source_rgb(cr, 0, 0, 0);
+    if (btn_type == 1) {
+        /* shade: two horizontal lines at rows 5 and 7 */
         cairo_rectangle(cr, bx + 1, by + 5, BTN_SIZE - 2, 1);
         cairo_fill(cr);
         cairo_rectangle(cr, bx + 1, by + 7, BTN_SIZE - 2, 1);
+        cairo_fill(cr);
+    } else if (btn_type == 2) {
+        /* minimize: bottom + right edges of a square whose top and left edges
+         * are the button's own inner bevel (row 2, col 2); lines meet at the
+         * midpoint of the inner face (col 6, row 6) */
+        cairo_rectangle(cr, bx + 2, by + 6, 5, 1);  /* bottom edge */
+        cairo_fill(cr);
+        cairo_rectangle(cr, bx + 6, by + 2, 1, 5);  /* right edge */
         cairo_fill(cr);
     }
 }
@@ -402,11 +421,12 @@ static struct wlr_buffer *render_frame(const char *title,
          * Odd  rows  → dark,  starting at fw_x=20 (Cairo 21)
          *
          * With title: left end = cairo_tx - 10,  right start = cairo_tx + text_w + 7
-         * Right end (light) = fw - 23 in fw coords = W - 24 in Cairo
-         *                   (= fw-23 + XBW = fw-22, and W=fw+2, so W-24)
+         * Right end stops 3 px (light) / 4 px (dark) before the minimize button,
+         * matching the same gap used between the close button and stripe start.
+         * Minimize left edge in Cairo = W - 33; so light = W-36, dark = W-37.
          */
-        double rx_end_light = W - 24.0;
-        double rx_end_dark  = W - 23.0;
+        double rx_end_light = W - 36.0;
+        double rx_end_dark  = W - 37.0;
 
         for (int i = 0; i < 12; i++) {
             double y = (4 + i) + X_BORDER_WIDTH;
@@ -458,11 +478,15 @@ static struct wlr_buffer *render_frame(const char *title,
     if (focused) {
         /* close: fw_x=3, fw_y=4  →  Cairo (4, 5) */
         draw_button(cr, 3 + X_BORDER_WIDTH, 4 + X_BORDER_WIDTH,
-                    false, lc, dc);
+                    0, lc, dc);
+
+        /* minimize: fw_x = fw-32, fw_y=4  →  Cairo (fw-31, 5) */
+        draw_button(cr, (fw - 32) + X_BORDER_WIDTH, 4 + X_BORDER_WIDTH,
+                    2, lc, dc);
 
         /* shade: fw_x = fw-16 = cw-8, fw_y=4  →  Cairo (cw-7, 5) */
         draw_button(cr, (fw - 16) + X_BORDER_WIDTH, 4 + X_BORDER_WIDTH,
-                    true, lc, dc);
+                    1, lc, dc);
     }
 
     cairo_destroy(cr);
@@ -480,6 +504,9 @@ void view_init(struct ywm_view *view, struct ywm_server *server,
                struct wlr_xdg_surface *xdg_surface) {
     view->server      = server;
     view->xdg_surface = xdg_surface;
+    view->minimized   = false;
+    view->icon_slot   = -1;
+    view->icon_buf    = NULL;
 
     view->scene_tree = wlr_scene_tree_create(server->layer_views);
     view->scene_tree->node.data = view;
@@ -587,4 +614,123 @@ void view_toggle_shade(struct ywm_view *view) {
         view->shaded = false;
     }
     view_update_decoration(view);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Minimize / restore
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+static int alloc_icon_slot(struct ywm_server *server) {
+    int slot = 0;
+    bool used;
+    do {
+        used = false;
+        struct ywm_view *v;
+        wl_list_for_each(v, &server->views, link) {
+            if (v->minimized && v->icon_slot == slot) {
+                used = true;
+                slot++;
+                break;
+            }
+        }
+    } while (used);
+    return slot;
+}
+
+/* render_icon — 25×25 raised-bevel tile with truncated window title */
+static struct wlr_buffer *render_icon(const struct ywm_view *view) {
+    int W = ICON_SIZE, H = ICON_SIZE;
+
+    struct frame_buffer *fb = calloc(1, sizeof(*fb));
+    fb->stride = (size_t)W * 4;
+    fb->data   = calloc(1, fb->stride * (size_t)H);
+
+    cairo_surface_t *cs = cairo_image_surface_create_for_data(
+        (unsigned char *)fb->data, CAIRO_FORMAT_ARGB32, W, H, (int)fb->stride);
+    cairo_t *cr = cairo_create(cs);
+
+    double fc = 0xaa / 255.0;
+    double lc = 0xca / 255.0;
+    double dc = 0x6a / 255.0;
+
+    /* fill */
+    cairo_set_source_rgb(cr, fc, fc, fc);
+    cairo_rectangle(cr, 0, 0, W, H);
+    cairo_fill(cr);
+
+    /* outer bevel: light top+left, dark bottom+right */
+    cairo_set_source_rgb(cr, lc, lc, lc);
+    cairo_rectangle(cr, 0, 0, W, 1);   cairo_fill(cr);
+    cairo_rectangle(cr, 0, 0, 1, H);   cairo_fill(cr);
+    cairo_set_source_rgb(cr, dc, dc, dc);
+    cairo_rectangle(cr, 0, H - 1, W, 1); cairo_fill(cr);
+    cairo_rectangle(cr, W - 1, 0, 1, H); cairo_fill(cr);
+
+    /* black 1px inset ring — bottom and right only */
+    cairo_set_source_rgb(cr, 0, 0, 0);
+    cairo_rectangle(cr, 1, H - 2, W - 2, 1); cairo_fill(cr);
+    cairo_rectangle(cr, W - 2, 1, 1, H - 2); cairo_fill(cr);
+
+    /* inner bevel: light top+left, dark bottom+right */
+    cairo_set_source_rgb(cr, lc, lc, lc);
+    cairo_rectangle(cr, 2, 2, W - 4, 1); cairo_fill(cr);
+    cairo_rectangle(cr, 2, 2, 1, H - 4); cairo_fill(cr);
+    cairo_set_source_rgb(cr, dc, dc, dc);
+    cairo_rectangle(cr, 2, H - 3, W - 4, 1); cairo_fill(cr);
+    cairo_rectangle(cr, W - 3, 2, 1, H - 4); cairo_fill(cr);
+
+    /* title text — centered, clipped to inner face */
+    const char *title = view->xdg_surface->toplevel->title;
+    if (title && title[0]) {
+        cairo_select_font_face(cr, "Arial",
+                               CAIRO_FONT_SLANT_NORMAL,
+                               CAIRO_FONT_WEIGHT_BOLD);
+        cairo_set_font_size(cr, 7.0);
+        cairo_set_source_rgb(cr, 0, 0, 0);
+
+        cairo_text_extents_t te;
+        cairo_text_extents(cr, title, &te);
+
+        double face_w = W - 6;   /* usable width inside bevel */
+        double tx;
+        if (te.width <= face_w) {
+            tx = 3 + (face_w - te.width) / 2.0 - te.x_bearing;
+        } else {
+            tx = 3 - te.x_bearing;
+            cairo_rectangle(cr, 3, 3, face_w, H - 6);
+            cairo_clip(cr);
+        }
+        cairo_move_to(cr, tx, (H - te.height) / 2.0 - te.y_bearing);
+        cairo_show_text(cr, title);
+    }
+
+    cairo_destroy(cr);
+    cairo_surface_destroy(cs);
+
+    wlr_buffer_init(&fb->base, &frame_buf_impl, W, H);
+    return &fb->base;
+}
+
+void view_toggle_minimize(struct ywm_view *view) {
+    struct ywm_server *server = view->server;
+    view->minimized  = true;
+    view->icon_slot  = alloc_icon_slot(server);
+
+    struct wlr_box lb = {0};
+    wlr_output_layout_get_box(server->output_layout, NULL, &lb);
+    view->icon_x = lb.x + ICON_PADDING + view->icon_slot * (ICON_SIZE + ICON_PADDING);
+    view->icon_y = lb.y + lb.height - ICON_SIZE - ICON_PADDING;
+
+    view->icon_buf = wlr_scene_buffer_create(server->layer_overlay,
+                                             render_icon(view));
+    wlr_scene_node_set_position(&view->icon_buf->node, view->icon_x, view->icon_y);
+    wlr_scene_node_set_enabled(&view->scene_tree->node, false);
+}
+
+void view_restore_minimize(struct ywm_view *view) {
+    view->minimized = false;
+    view->icon_slot = -1;
+    wlr_scene_node_set_enabled(&view->scene_tree->node, true);
+    wlr_scene_node_destroy(&view->icon_buf->node);
+    view->icon_buf = NULL;
 }

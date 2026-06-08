@@ -418,11 +418,14 @@ static void process_cursor_motion(struct ywm_server *server, uint32_t time) {
     wl_list_for_each(view, &server->views, link) {
         bool was_close = view->deco.close_hovered;
         bool was_shade = view->deco.shade_hovered;
+        bool was_min   = view->deco.minimize_hovered;
         bool now_close = view_hit_close(view, cx, cy);
         bool now_shade = view_hit_shade(view, cx, cy);
-        view->deco.close_hovered = now_close;
-        view->deco.shade_hovered = now_shade;
-        if (now_close != was_close || now_shade != was_shade)
+        bool now_min   = view_hit_minimize(view, cx, cy);
+        view->deco.close_hovered    = now_close;
+        view->deco.shade_hovered    = now_shade;
+        view->deco.minimize_hovered = now_min;
+        if (now_close != was_close || now_shade != was_shade || now_min != was_min)
             view_update_title(view, view == front);
     }
 
@@ -522,6 +525,7 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
             if (view_hit_titlebar(v, lx, ly) ||
                 view_hit_close(v, lx, ly) ||
                 view_hit_shade(v, lx, ly) ||
+                view_hit_minimize(v, lx, ly) ||
                 view_hit_resize(v, lx, ly)) {
                 view = v;
                 break;
@@ -535,7 +539,20 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
         return;
     }
 
-    if (!view) return;
+    /* Icon tile click: restore minimized window */
+    if (!view) {
+        struct ywm_view *v;
+        wl_list_for_each(v, &server->views, link) {
+            if (v->minimized &&
+                lx >= v->icon_x && lx < v->icon_x + ICON_SIZE &&
+                ly >= v->icon_y && ly < v->icon_y + ICON_SIZE) {
+                view_restore_minimize(v);
+                server_focus_view(server, v, v->xdg_surface->surface);
+                return;
+            }
+        }
+        return;
+    }
 
     server_focus_view(server, view,
                       surface ? surface : view->xdg_surface->surface);
@@ -549,6 +566,12 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
     /* Shade button */
     if (view_hit_shade(view, lx, ly)) {
         view_toggle_shade(view);
+        return;
+    }
+
+    /* Minimize button */
+    if (view_hit_minimize(view, lx, ly)) {
+        view_toggle_minimize(view);
         return;
     }
 
@@ -627,6 +650,8 @@ static void xdg_surface_unmap(struct wl_listener *listener, void *data) {
 static void xdg_surface_destroy(struct wl_listener *listener, void *data) {
     (void)data;
     struct ywm_view *view = wl_container_of(listener, view, destroy);
+    if (view->minimized && view->icon_buf)
+        wlr_scene_node_destroy(&view->icon_buf->node);
     wl_list_remove(&view->map.link);
     wl_list_remove(&view->unmap.link);
     wl_list_remove(&view->destroy.link);
