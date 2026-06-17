@@ -147,25 +147,34 @@ uint32_t view_hit_resize(const struct ywm_view *view, double lx, double ly) {
     int fy = (int)ly - (view->y - TITLE_BAR_HEIGHT);
 
     if (fx < 0 || fx > fw || fy < 0 || fy > fh) return 0;
-    /* exclude the titlebar strip — only borders below it are resize zones */
-    if (fy <= TITLE_BAR_HEIGHT) return 0;
 
+    bool top    = (fy <= BORDER_WIDTH);
     bool left   = (fx <= BORDER_WIDTH);
     bool right  = (fx >= fw - BORDER_WIDTH);
     bool bottom = (fy >= fh - BORDER_WIDTH);
-    if (!left && !right && !bottom) return 0;
 
-    /* corner priority matches Xlib on_motion_notify order:
-     * lower_right > lower_left > left > right > bottom */
+    /* titlebar interior (below top strip, above client area, not a side border)
+     * is the drag/move zone — not a resize zone */
+    if (fy > BORDER_WIDTH && fy <= TITLE_BAR_HEIGHT && !left && !right) return 0;
+    if (!top && !left && !right && !bottom) return 0;
+
+    /* corner priority: upper corners first, then lower, then edges */
+    bool upper_right = (top    && fx >= fw - CORNER_OFFSET)
+                    || (right  && fy <= CORNER_OFFSET);
+    bool upper_left  = (top    && fx <= CORNER_OFFSET)
+                    || (left   && fy <= CORNER_OFFSET);
     bool lower_right = (bottom && fx >= fw - CORNER_OFFSET)
                     || (right  && fy >= fh - CORNER_OFFSET);
     bool lower_left  = (bottom && fx <= CORNER_OFFSET)
                     || (left   && fy >= fh - CORNER_OFFSET);
 
+    if (upper_right) return RESIZE_TOP | RESIZE_RIGHT;
+    if (upper_left)  return RESIZE_TOP | RESIZE_LEFT;
     if (lower_right) return RESIZE_RIGHT | RESIZE_BOTTOM;
     if (lower_left)  return RESIZE_LEFT  | RESIZE_BOTTOM;
     if (left)        return RESIZE_LEFT;
     if (right)       return RESIZE_RIGHT;
+    if (top)         return RESIZE_TOP;
     return RESIZE_BOTTOM;
 }
 
@@ -245,11 +254,10 @@ static void draw_button(cairo_t *cr, double bx, double by, int btn_type,
         cairo_fill(cr);
     } else if (btn_type == 2) {
         /* minimize: bottom + right edges of a square whose top and left edges
-         * are the button's own inner bevel (row 2, col 2); lines meet at the
-         * midpoint of the inner face (col 6, row 6) */
-        cairo_rectangle(cr, bx + 2, by + 6, 5, 1);  /* bottom edge */
+         * are the button's own inner bevel (row 2, col 2); lines meet at col/row 10 */
+        cairo_rectangle(cr, bx + 2, by + 7, 6, 1);  /* bottom edge */
         cairo_fill(cr);
-        cairo_rectangle(cr, bx + 6, by + 2, 1, 5);  /* right edge */
+        cairo_rectangle(cr, bx + 7, by + 2, 1, 6);  /* right edge */
         cairo_fill(cr);
     }
 }
@@ -389,10 +397,10 @@ static struct wlr_buffer *render_frame(const char *title,
 
     /* ── Titlebar decorations (draw_window_titlebar()) ───────────────────── */
 
-    cairo_select_font_face(cr, "Arial",
+    cairo_select_font_face(cr, "DejaVu Sans",
                            CAIRO_FONT_SLANT_NORMAL,
                            CAIRO_FONT_WEIGHT_BOLD);
-    cairo_set_font_size(cr, 10.0);   /* matches "Arial-10:bold" in Xft */
+    cairo_set_font_size(cr, 11.0);
 
     cairo_text_extents_t ext = {0};
     double text_w = 0;
@@ -504,6 +512,7 @@ void view_init(struct ywm_view *view, struct ywm_server *server,
                struct wlr_xdg_surface *xdg_surface) {
     view->server      = server;
     view->xdg_surface = xdg_surface;
+    view->csd         = false;
     view->minimized   = false;
     view->icon_slot   = -1;
     view->icon_buf    = NULL;
@@ -548,6 +557,21 @@ void view_init(struct ywm_view *view, struct ywm_server *server,
 static void view_update_frame(struct ywm_view *view, bool focused) {
     int cw = client_width(view);
     if (cw <= 0) return;
+
+    if (view->csd) {
+        /* Client draws its own decorations — hide our frame and position the
+         * scene tree directly at (view->x, view->y) with no decoration offsets. */
+        if (view->deco.frame)
+            wlr_scene_node_set_enabled(&view->deco.frame->node, false);
+        struct wlr_scene_tree *surf =
+            (struct wlr_scene_tree *)view->xdg_surface->data;
+        if (surf)
+            wlr_scene_node_set_position(&surf->node, 0, 0);
+        wlr_scene_node_set_position(&view->scene_tree->node,
+                                    view->x, view->y);
+        return;
+    }
+
     int ch = client_height(view);   /* 0 when shaded */
 
     const char *title = view->xdg_surface->toplevel->title
@@ -671,10 +695,7 @@ static struct wlr_buffer *render_icon(const struct ywm_view *view) {
     cairo_rectangle(cr, 1, H - 2, W - 2, 1); cairo_fill(cr);
     cairo_rectangle(cr, W - 2, 1, 1, H - 2); cairo_fill(cr);
 
-    /* inner bevel: light top+left, dark bottom+right */
-    cairo_set_source_rgb(cr, lc, lc, lc);
-    cairo_rectangle(cr, 2, 2, W - 4, 1); cairo_fill(cr);
-    cairo_rectangle(cr, 2, 2, 1, H - 4); cairo_fill(cr);
+    /* inner bevel: dark bottom+right only */
     cairo_set_source_rgb(cr, dc, dc, dc);
     cairo_rectangle(cr, 2, H - 3, W - 4, 1); cairo_fill(cr);
     cairo_rectangle(cr, W - 3, 2, 1, H - 4); cairo_fill(cr);
@@ -682,16 +703,16 @@ static struct wlr_buffer *render_icon(const struct ywm_view *view) {
     /* title text — centered, clipped to inner face */
     const char *title = view->xdg_surface->toplevel->title;
     if (title && title[0]) {
-        cairo_select_font_face(cr, "Arial",
+        cairo_select_font_face(cr, "DejaVu Sans",
                                CAIRO_FONT_SLANT_NORMAL,
                                CAIRO_FONT_WEIGHT_BOLD);
-        cairo_set_font_size(cr, 7.0);
+        cairo_set_font_size(cr, 12.0);
         cairo_set_source_rgb(cr, 0, 0, 0);
 
         cairo_text_extents_t te;
         cairo_text_extents(cr, title, &te);
 
-        double face_w = W - 6;   /* usable width inside bevel */
+        double face_w = W - 8;   /* usable width inside bevel */
         double tx;
         if (te.width <= face_w) {
             tx = 3 + (face_w - te.width) / 2.0 - te.x_bearing;

@@ -18,7 +18,7 @@
 /* shade btn left in frame-window coords = cw - 6  (computed at runtime) */
 /* minimize btn left in frame-window coords = cw - 22 (computed at runtime) */
 
-#define ICON_SIZE         50   /* minimized window icon tile px */
+#define ICON_SIZE         75   /* minimized window icon tile px */
 #define ICON_PADDING       4   /* gap around icon tiles px */
 
 #define DBLCLICK_MS      400u
@@ -31,6 +31,7 @@
 #define RESIZE_LEFT   (1u << 0)
 #define RESIZE_RIGHT  (1u << 1)
 #define RESIZE_BOTTOM (1u << 2)
+#define RESIZE_TOP    (1u << 3)
 
 struct ywm_server;
 
@@ -52,6 +53,8 @@ struct ywm_view {
     struct ywm_decoration   deco;
 
     int x, y;          /* top-left of the client area in layout space */
+
+    bool    csd;             /* client is drawing its own decorations */
 
     bool    shaded;
     int     unshaded_height;

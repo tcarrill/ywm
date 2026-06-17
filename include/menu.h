@@ -33,6 +33,7 @@ struct ywm_menu {
     struct wlr_scene_buffer *title_buf;
 
     float title_color[4];   /* copied from cfg at init; R G B A in [0,1] */
+    float alpha;            /* item fill opacity 0.0–1.0; title bar always opaque */
 
     /* Flash animation state */
     struct wl_event_source *flash_timer;
@@ -41,12 +42,13 @@ struct ywm_menu {
     char  pending_cmd[MENU_CMD_MAX];
 };
 
-void menu_init    (struct ywm_menu *menu, struct ywm_server *server);
-void menu_load    (struct ywm_menu *menu);
-void menu_show    (struct ywm_menu *menu, int x, int y);
-void menu_hide    (struct ywm_menu *menu);
-void menu_motion  (struct ywm_menu *menu, double lx, double ly);
-void menu_activate(struct ywm_menu *menu, double lx, double ly);
-bool menu_hit     (const struct ywm_menu *menu, double lx, double ly);
+void menu_init           (struct ywm_menu *menu, struct ywm_server *server);
+void menu_load           (struct ywm_menu *menu);
+void menu_show           (struct ywm_menu *menu, int x, int y);
+void menu_hide           (struct ywm_menu *menu);
+void menu_motion         (struct ywm_menu *menu, double lx, double ly);
+void menu_activate       (struct ywm_menu *menu, double lx, double ly);
+bool menu_hit            (const struct ywm_menu *menu, double lx, double ly);
+void menu_config_changed (struct ywm_menu *menu);
 
 #endif /* YWM_MENU_H */

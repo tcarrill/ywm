@@ -123,7 +123,7 @@ static struct wlr_buffer *render_title(const float tc[4]) {
    4. Label text: black, "Arial" regular 10, baseline at (7,15)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-static struct wlr_buffer *render_item(const char *label, bool flash) {
+static struct wlr_buffer *render_item(const char *label, bool flash, float alpha) {
     int W = MENU_WIDTH, H = MENU_ITEM_H;
     int w = W - 1, h = H - 1;
 
@@ -135,10 +135,12 @@ static struct wlr_buffer *render_item(const char *label, bool flash) {
         (unsigned char *)mb->data, CAIRO_FORMAT_ARGB32, W, H, (int)mb->stride);
     cairo_t *cr = cairo_create(cs);
 
-    /* Base fill = window background (#aaaaaa) */
+    /* Base fill = window background (#aaaaaa) — alpha controlled by config */
     double fc = 0xaa / 255.0;
-    cairo_set_source_rgb(cr, fc, fc, fc);
+    cairo_set_source_rgba(cr, fc, fc, fc, alpha);
     cairo_paint(cr);
+
+    /* Bevel and border lines remain fully opaque to preserve 3D structure */
 
     /* Unfocused light (#eaeaea): top + left */
     double ulc = 0xea / 255.0;
@@ -163,20 +165,21 @@ static struct wlr_buffer *render_item(const char *label, bool flash) {
     cairo_rectangle(cr, 0, h, W, 1);   /* (0,h)→(w,h) */
     cairo_fill(cr);
 
-    /* Inner fill drawn over the bevel, matching Xlib draw order */
+    /* Inner fill — use SOURCE operator so alpha replaces rather than compounds
+     * with the base fill painted earlier (OVER would give alpha(2-alpha)). */
+    cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
     if (flash) {
-        /* flash_gc = #c8c5e6 at (0,0) size (w-1, h-2) = (173,19) */
-        cairo_set_source_rgb(cr, 0xc8 / 255.0, 0xc5 / 255.0, 0xe6 / 255.0);
+        cairo_set_source_rgba(cr, 0xc8 / 255.0, 0xc5 / 255.0, 0xe6 / 255.0, alpha);
         cairo_rectangle(cr, 0, 0, w - 1, h - 2);
         cairo_fill(cr);
     } else {
-        /* focused_frame_gc = #aaaaaa at (2,2) size (w-3, h-3) = (171,18) */
-        cairo_set_source_rgb(cr, fc, fc, fc);
+        cairo_set_source_rgba(cr, fc, fc, fc, alpha);
         cairo_rectangle(cr, 2, 2, w - 3, h - 3);
         cairo_fill(cr);
     }
+    cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
 
-    /* Label text: "Arial-10:medium" → Arial regular 10, black at (7, 15) */
+    /* Label text: fully opaque */
     if (label && label[0]) {
         cairo_select_font_face(cr, "Arial",
                                CAIRO_FONT_SLANT_NORMAL,
@@ -199,7 +202,7 @@ static struct wlr_buffer *render_item(const char *label, bool flash) {
 
 static void set_item_buf(struct ywm_menu *menu, int idx, bool flash) {
     struct ywm_menu_item *item = &menu->items[idx];
-    struct wlr_buffer *buf = render_item(item->label, flash);
+    struct wlr_buffer *buf = render_item(item->label, flash, menu->alpha);
     if (!buf) return;
 
     if (!item->buf) {
@@ -272,9 +275,10 @@ void menu_init(struct ywm_menu *menu, struct ywm_server *server) {
     menu->hovered    = -1;
     menu->flash_item = -1;
 
-    /* Copy title colour from config so rendering doesn't need the server */
+    /* Copy title colour and alpha from config so rendering doesn't need the server */
     for (int i = 0; i < 4; i++)
         menu->title_color[i] = server->cfg.menu_title_color[i];
+    menu->alpha = server->cfg.menu_alpha;
 
     menu->tree = wlr_scene_tree_create(server->layer_overlay);
     wlr_scene_node_set_enabled(&menu->tree->node, false);
@@ -443,4 +447,22 @@ void menu_activate(struct ywm_menu *menu, double lx, double ly) {
     set_item_buf(menu, idx, false);
 
     wl_event_source_timer_update(menu->flash_timer, FLASH_MS);
+}
+
+/* ── Config changed: re-render all buffers immediately in-place ──────────── */
+
+void menu_config_changed(struct ywm_menu *menu) {
+    /* Re-render title bar in-place if already built */
+    if (menu->title_buf) {
+        struct wlr_buffer *buf = render_title(menu->title_color);
+        if (buf) {
+            wlr_scene_buffer_set_buffer(menu->title_buf, buf);
+            wlr_buffer_drop(buf);
+        }
+    }
+    /* Re-render each item in-place; items not yet built stay NULL */
+    for (int i = 0; i < menu->count; i++) {
+        if (menu->items[i].buf)
+            set_item_buf(menu, i, i == menu->hovered);
+    }
 }

@@ -7,12 +7,13 @@
 struct ywm_server;
 
 struct ywm_output {
-    struct wl_list      link;       /* ywm_server.outputs */
-    struct ywm_server  *server;
-    struct wlr_output  *wlr_output;
-    struct wl_listener  frame;
-    struct wl_listener  request_state;
-    struct wl_listener  destroy;
+    struct wl_list           link;       /* ywm_server.outputs */
+    struct ywm_server       *server;
+    struct wlr_output       *wlr_output;
+    struct wl_listener       frame;
+    struct wl_listener       request_state;
+    struct wl_listener       destroy;
+    struct wlr_scene_buffer *bg_tile;    /* NULL if no tiled background */
 };
 
 #endif /* YWM_OUTPUT_H */

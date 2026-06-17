@@ -2,8 +2,14 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/inotify.h>
 #include <linux/input-event-codes.h>
 #include <xkbcommon/xkbcommon.h>
+#include <cairo/cairo.h>
+#include <drm_fourcc.h>
+#include <wlr/interfaces/wlr_buffer.h>
+#include <wlr/types/wlr_buffer.h>
+#include <wlr/types/wlr_output.h>
 
 #include "server.h"
 #include "menu.h"
@@ -56,11 +62,182 @@ static void output_request_state(struct wl_listener *listener, void *data) {
 static void output_destroy(struct wl_listener *listener, void *data) {
     (void)data;
     struct ywm_output *output = wl_container_of(listener, output, destroy);
+    if (output->bg_tile)
+        wlr_scene_node_destroy(&output->bg_tile->node);
     wl_list_remove(&output->frame.link);
     wl_list_remove(&output->request_state.link);
     wl_list_remove(&output->destroy.link);
     wl_list_remove(&output->link);
     free(output);
+}
+
+static void create_tiled_background(struct ywm_server *server,
+                                    struct ywm_output *output);
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Config hot-reload
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+static void apply_config(struct ywm_server *server) {
+    bool want_picture = (server->cfg.tile_path[0] != '\0');
+    wlr_log(WLR_INFO, "apply_config: want_picture=%d path=%s",
+            want_picture, want_picture ? server->cfg.tile_path : "(none)");
+
+    /* Background */
+    if (want_picture) {
+        if (server->bg_rect) {
+            wlr_scene_node_destroy(&server->bg_rect->node);
+            server->bg_rect = NULL;
+        }
+        struct ywm_output *output;
+        wl_list_for_each(output, &server->outputs, link) {
+            if (output->bg_tile) {
+                wlr_scene_node_destroy(&output->bg_tile->node);
+                output->bg_tile = NULL;
+            }
+            create_tiled_background(server, output);
+        }
+    } else {
+        struct ywm_output *output;
+        wl_list_for_each(output, &server->outputs, link) {
+            if (output->bg_tile) {
+                wlr_scene_node_destroy(&output->bg_tile->node);
+                output->bg_tile = NULL;
+            }
+        }
+        if (server->bg_rect) {
+            wlr_scene_rect_set_color(server->bg_rect, server->cfg.bg_color);
+        } else {
+            server->bg_rect = wlr_scene_rect_create(
+                server->layer_background, 65536, 65536, server->cfg.bg_color);
+        }
+    }
+
+    /* Menu — update values then re-render all cached buffers immediately */
+    for (int i = 0; i < 4; i++)
+        server->menu.title_color[i] = server->cfg.menu_title_color[i];
+    server->menu.alpha = server->cfg.menu_alpha;
+    menu_config_changed(&server->menu);
+
+    /* Window decorations */
+    struct ywm_view *view;
+    wl_list_for_each(view, &server->views, link)
+        view_update_decoration(view);
+}
+
+static int config_reload_cb(int fd, uint32_t mask, void *data) {
+    (void)mask;
+    struct ywm_server *server = data;
+    /* Read all pending inotify events; reload only if ywm.ini was affected.
+     * Watching the directory (not the file) means the watch survives atomic
+     * saves where editors replace the file via a temp-file rename. */
+    char buf[4096] __attribute__((aligned(__alignof__(struct inotify_event))));
+    bool should_reload = false;
+    ssize_t len;
+    while ((len = read(fd, buf, sizeof(buf))) > 0) {
+        char *ptr = buf;
+        while (ptr < buf + (size_t)len) {
+            struct inotify_event *ev = (struct inotify_event *)ptr;
+            if (ev->len > 0 && strcmp(ev->name, "ywm.ini") == 0)
+                should_reload = true;
+            ptr += sizeof(struct inotify_event) + ev->len;
+        }
+    }
+    if (should_reload) {
+        config_load(&server->cfg);
+        apply_config(server);
+        wlr_log(WLR_INFO, "ywm: config reloaded");
+    }
+    return 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Tiled background — Cairo buffer backed by a malloc'd pixel array,
+   same pattern as frame_buffer (view.c) and menu_buffer (menu.c).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+struct bg_buffer {
+    struct wlr_buffer base;
+    void             *data;
+    size_t            stride;
+};
+
+static void bg_buf_destroy(struct wlr_buffer *buf) {
+    struct bg_buffer *bb = (struct bg_buffer *)buf;
+    free(bb->data);
+    free(bb);
+}
+
+static bool bg_buf_begin_access(struct wlr_buffer *buf, uint32_t flags,
+                                 void **data, uint32_t *format, size_t *stride) {
+    (void)flags;
+    struct bg_buffer *bb = (struct bg_buffer *)buf;
+    *data   = bb->data;
+    *format = DRM_FORMAT_ARGB8888;
+    *stride = bb->stride;
+    return true;
+}
+
+static void bg_buf_end_access(struct wlr_buffer *buf) { (void)buf; }
+
+static const struct wlr_buffer_impl bg_buf_impl = {
+    .destroy               = bg_buf_destroy,
+    .begin_data_ptr_access = bg_buf_begin_access,
+    .end_data_ptr_access   = bg_buf_end_access,
+};
+
+static void create_tiled_background(struct ywm_server *server,
+                                    struct ywm_output *output) {
+    cairo_surface_t *img =
+        cairo_image_surface_create_from_png(server->cfg.tile_path);
+    if (cairo_surface_status(img) != CAIRO_STATUS_SUCCESS) {
+        wlr_log(WLR_ERROR, "ywm: failed to load background picture: %s",
+                server->cfg.tile_path);
+        cairo_surface_destroy(img);
+        return;
+    }
+
+    int w, h;
+    wlr_output_effective_resolution(output->wlr_output, &w, &h);
+
+    int img_w = cairo_image_surface_get_width(img);
+    int img_h = cairo_image_surface_get_height(img);
+
+    struct bg_buffer *bb = calloc(1, sizeof(*bb));
+    bb->stride = (size_t)w * 4;
+    bb->data   = calloc(1, bb->stride * (size_t)h);
+
+    cairo_surface_t *cs = cairo_image_surface_create_for_data(
+        (unsigned char *)bb->data, CAIRO_FORMAT_ARGB32, w, h, (int)bb->stride);
+    cairo_t *cr = cairo_create(cs);
+
+    if (img_w < w || img_h < h) {
+        /* Image smaller than output in at least one dimension — tile */
+        cairo_pattern_t *pat = cairo_pattern_create_for_surface(img);
+        cairo_pattern_set_extend(pat, CAIRO_EXTEND_REPEAT);
+        cairo_set_source(cr, pat);
+        cairo_paint(cr);
+        cairo_pattern_destroy(pat);
+    } else {
+        /* Image covers the output — scale to fill */
+        cairo_scale(cr, (double)w / img_w, (double)h / img_h);
+        cairo_set_source_surface(cr, img, 0, 0);
+        cairo_paint(cr);
+    }
+
+    cairo_destroy(cr);
+    cairo_surface_destroy(cs);
+    cairo_surface_destroy(img);
+
+    wlr_buffer_init(&bb->base, &bg_buf_impl, w, h);
+
+    struct wlr_box lb = {0};
+    wlr_output_layout_get_box(server->output_layout, output->wlr_output, &lb);
+
+    output->bg_tile = wlr_scene_buffer_create(server->layer_background,
+                                              &bb->base);
+    wlr_scene_node_set_position(&output->bg_tile->node, lb.x, lb.y);
+    wlr_buffer_drop(&bb->base);
 }
 
 static void server_new_output(struct wl_listener *listener, void *data) {
@@ -101,6 +278,9 @@ static void server_new_output(struct wl_listener *listener, void *data) {
     struct wlr_scene_output *scene_out =
         wlr_scene_output_create(server->scene, wlr_output);
     wlr_scene_output_layout_add_output(server->scene_layout, l_out, scene_out);
+
+    if (server->cfg.tile_path[0] != '\0')
+        create_tiled_background(server, output);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -240,10 +420,12 @@ static void seat_request_set_selection(struct wl_listener *listener,
    ═══════════════════════════════════════════════════════════════════════════ */
 
 static const char *cursor_name_for_resize(uint32_t edges) {
+    if ((edges & RESIZE_TOP)    && (edges & RESIZE_RIGHT)) return "top_right_corner";
+    if ((edges & RESIZE_TOP)    && (edges & RESIZE_LEFT))  return "top_left_corner";
     if ((edges & RESIZE_BOTTOM) && (edges & RESIZE_RIGHT)) return "bottom_right_corner";
     if ((edges & RESIZE_BOTTOM) && (edges & RESIZE_LEFT))  return "bottom_left_corner";
     if (edges & (RESIZE_LEFT | RESIZE_RIGHT))               return "sb_h_double_arrow";
-    if (edges & RESIZE_BOTTOM)                              return "sb_v_double_arrow";
+    if (edges & (RESIZE_TOP | RESIZE_BOTTOM))               return "sb_v_double_arrow";
     return "default";
 }
 
@@ -257,6 +439,10 @@ static void process_cursor_move(struct ywm_server *server) {
     int cw = view_client_width(view);
     int ch = view_client_height(view);
 
+    /* Shaded windows have no bottom border — their frame ends flush after the
+     * titlebar.  fb_off is the offset from view->y to the outer bottom edge. */
+    int fb_off = view->shaded ? X_BORDER_WIDTH : ch + BORDER_WIDTH + X_BORDER_WIDTH;
+
     /* Window-to-window snapping ------------------------------------------ */
     if (server->cfg.window_snap_buffer > 0) {
         int wsnap = server->cfg.window_snap_buffer;
@@ -266,18 +452,20 @@ static void process_cursor_move(struct ywm_server *server) {
         int fl = new_x - BORDER_WIDTH - X_BORDER_WIDTH;
         int fr = new_x + cw  + BORDER_WIDTH + X_BORDER_WIDTH;
         int ft = new_y - TITLE_BAR_HEIGHT   - X_BORDER_WIDTH;
-        int fb = new_y + ch  + BORDER_WIDTH + X_BORDER_WIDTH;
+        int fb = new_y + fb_off;
 
         struct ywm_view *other;
         wl_list_for_each(other, &server->views, link) {
             if (other == view) continue;
 
-            int ocw = view_client_width(other);
-            int och = view_client_height(other);
+            int ocw    = view_client_width(other);
+            int och    = view_client_height(other);
+            int ofb_off = other->shaded ? X_BORDER_WIDTH
+                                        : och + BORDER_WIDTH + X_BORDER_WIDTH;
             int ofl = other->x - BORDER_WIDTH - X_BORDER_WIDTH;
             int ofr = other->x + ocw + BORDER_WIDTH + X_BORDER_WIDTH;
             int oft = other->y - TITLE_BAR_HEIGHT   - X_BORDER_WIDTH;
-            int ofb = other->y + och + BORDER_WIDTH + X_BORDER_WIDTH;
+            int ofb = other->y + ofb_off;
 
             /* Overlap predicates mirror Xlib is_above/below/left/right */
             bool v_overlap = (fb > oft) && (ft < ofb);
@@ -298,13 +486,11 @@ static void process_cursor_move(struct ywm_server *server) {
             if (!snapped && h_overlap) {
                 /* Snap top: a's top frame approaches b's bottom frame */
                 if (ft - wsnap <= ofb && ft - wsnap >= ofb - wres) {
-                    new_y   = other->y + och + TITLE_BAR_HEIGHT + BORDER_WIDTH
-                              + 2 * X_BORDER_WIDTH;
+                    new_y   = ofb + TITLE_BAR_HEIGHT + X_BORDER_WIDTH;
                     snapped = true;
                 /* Snap bottom: a's bottom frame approaches b's top frame */
                 } else if (fb + wsnap >= oft && fb + wsnap <= oft + wres) {
-                    new_y   = other->y - TITLE_BAR_HEIGHT - ch - BORDER_WIDTH
-                              - 2 * X_BORDER_WIDTH;
+                    new_y   = oft - fb_off;
                     snapped = true;
                 }
             }
@@ -326,7 +512,7 @@ static void process_cursor_move(struct ywm_server *server) {
         int fl = new_x - BORDER_WIDTH - X_BORDER_WIDTH;
         int fr = new_x + cw  + BORDER_WIDTH + X_BORDER_WIDTH;
         int ft = new_y - TITLE_BAR_HEIGHT   - X_BORDER_WIDTH;
-        int fb = new_y + ch  + BORDER_WIDTH + X_BORDER_WIDTH;
+        int fb = new_y + fb_off;
 
         /* Horizontal */
         if (fr + esnap >= sw && fr + esnap <= sw + eres)
@@ -336,7 +522,7 @@ static void process_cursor_move(struct ywm_server *server) {
 
         /* Vertical */
         if (fb + esnap >= sh && fb + esnap <= sh + eres)
-            new_y = sh - ch  - BORDER_WIDTH - X_BORDER_WIDTH;
+            new_y = sh - fb_off;
         else if (ft - esnap <= sy && ft - esnap >= sy - eres)
             new_y = sy + TITLE_BAR_HEIGHT + X_BORDER_WIDTH;
     }
@@ -344,8 +530,8 @@ static void process_cursor_move(struct ywm_server *server) {
     view->x = new_x;
     view->y = new_y;
     wlr_scene_node_set_position(&view->scene_tree->node,
-                                view->x - BORDER_WIDTH - X_BORDER_WIDTH,
-                                view->y - TITLE_BAR_HEIGHT - X_BORDER_WIDTH);
+        view->csd ? view->x : view->x - BORDER_WIDTH - X_BORDER_WIDTH,
+        view->csd ? view->y : view->y - TITLE_BAR_HEIGHT - X_BORDER_WIDTH);
 }
 
 /*
@@ -364,12 +550,17 @@ static void process_cursor_resize(struct ywm_server *server) {
     int new_cw = server->grab_width;
     int new_ch = server->grab_height;
     int new_vx = server->grab_vx;
+    int new_vy = server->grab_vy;
 
     if (edges & RESIZE_RIGHT)  new_cw = server->grab_width  + (int)dx;
     if (edges & RESIZE_BOTTOM) new_ch = server->grab_height + (int)dy;
     if (edges & RESIZE_LEFT) {
         new_cw = server->grab_width  - (int)dx;
         new_vx = server->grab_vx    + (int)dx;
+    }
+    if (edges & RESIZE_TOP) {
+        new_ch = server->grab_height - (int)dy;
+        new_vy = server->grab_vy    + (int)dy;
     }
 
     /* enforce minimums against frame dimensions, matching Xlib:
@@ -378,12 +569,13 @@ static void process_cursor_resize(struct ywm_server *server) {
     int new_fh = new_ch + TITLE_BAR_HEIGHT + BORDER_WIDTH;
     if (new_fw <= MIN_FRAME_W || new_fh <= MIN_FRAME_H) return;
 
-    /* for left-edge resize: update client position immediately */
-    if (edges & RESIZE_LEFT) {
+    /* for left/top-edge resize: update client position immediately */
+    if ((edges & RESIZE_LEFT) || (edges & RESIZE_TOP)) {
         view->x = new_vx;
+        view->y = new_vy;
         wlr_scene_node_set_position(&view->scene_tree->node,
-                                    view->x - BORDER_WIDTH - X_BORDER_WIDTH,
-                                    view->y - TITLE_BAR_HEIGHT - X_BORDER_WIDTH);
+            view->csd ? view->x : view->x - BORDER_WIDTH - X_BORDER_WIDTH,
+            view->csd ? view->y : view->y - TITLE_BAR_HEIGHT - X_BORDER_WIDTH);
     }
 
     wlr_cursor_set_xcursor(server->cursor, server->cursor_mgr,
@@ -618,10 +810,29 @@ static void server_cursor_frame(struct wl_listener *listener, void *data) {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 static void xdg_decoration_new(struct wl_listener *listener, void *data) {
-    (void)listener;
+    struct ywm_server *server = wl_container_of(listener, server, new_xdg_decoration);
     struct wlr_xdg_toplevel_decoration_v1 *deco = data;
-    wlr_xdg_toplevel_decoration_v1_set_mode(
-        deco, WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+
+    bool client_side = (deco->requested_mode ==
+                        WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE);
+
+    wlr_log(WLR_INFO, "xdg_decoration: app_id=%s requested=%s",
+            deco->toplevel->app_id ? deco->toplevel->app_id : "(unknown)",
+            client_side ? "CLIENT_SIDE" : "SERVER_SIDE");
+
+    wlr_xdg_toplevel_decoration_v1_set_mode(deco,
+        client_side ? WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE
+                    : WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+
+    /* Mark the associated view so it is positioned without decoration offsets */
+    struct wlr_xdg_surface *xdg_surface = deco->toplevel->base;
+    struct ywm_view *v;
+    wl_list_for_each(v, &server->views, link) {
+        if (v->xdg_surface == xdg_surface) {
+            v->csd = client_side;
+            break;
+        }
+    }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -631,6 +842,23 @@ static void xdg_decoration_new(struct wl_listener *listener, void *data) {
 static void xdg_surface_map(struct wl_listener *listener, void *data) {
     (void)data;
     struct ywm_view *view = wl_container_of(listener, view, map);
+
+    /* Check app_id against the configured CSD list */
+    if (!view->csd) {
+        const char *app_id = view->xdg_surface->toplevel->app_id;
+        wlr_log(WLR_INFO, "xdg_surface_map: app_id=\"%s\"",
+                app_id ? app_id : "(null)");
+        if (app_id) {
+            const struct ywm_config *cfg = &view->server->cfg;
+            for (int i = 0; i < cfg->csd_app_count; i++) {
+                if (strcmp(app_id, cfg->csd_apps[i]) == 0) {
+                    view->csd = true;
+                    break;
+                }
+            }
+        }
+    }
+
     view_update_decoration(view);
     struct ywm_view *first = wl_container_of(view->server->views.next, first, link);
     bool focused = !wl_list_empty(&view->server->views) && first == view;
@@ -836,6 +1064,7 @@ void server_begin_interactive(struct ywm_server *server,
         server->grab_width   = geo.width;
         server->grab_height  = geo.height;
         server->grab_vx      = view->x;
+        server->grab_vy      = view->y;
         server->resize_edges = edges;
     }
 }
@@ -876,7 +1105,9 @@ bool server_init(struct ywm_server *server) {
     server->layer_views      = wlr_scene_tree_create(&server->scene->tree);
     server->layer_overlay    = wlr_scene_tree_create(&server->scene->tree);
 
-    wlr_scene_rect_create(server->layer_background, 65536, 65536, server->cfg.bg_color);
+    if (server->cfg.tile_path[0] == '\0')
+        server->bg_rect = wlr_scene_rect_create(server->layer_background,
+                                                65536, 65536, server->cfg.bg_color);
 
     menu_init(&server->menu, server);
     menu_load(&server->menu);
@@ -936,6 +1167,28 @@ bool server_init(struct ywm_server *server) {
     server->new_output.notify = server_new_output;
     wl_signal_add(&server->backend->events.new_output, &server->new_output);
 
+    /* Config file watch — inotify on the config directory so the watch
+     * survives atomic saves (temp-file rename replaces the inode). */
+    server->cfg_inotify_fd = -1;
+    server->cfg_watch      = NULL;
+    const char *home = getenv("HOME");
+    if (home) {
+        snprintf(server->cfg_path, sizeof(server->cfg_path),
+                 "%s/.config/ywm/ywm.ini", home);
+        char cfg_dir[512];
+        snprintf(cfg_dir, sizeof(cfg_dir), "%s/.config/ywm", home);
+        int ifd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
+        if (ifd >= 0) {
+            inotify_add_watch(ifd, cfg_dir, IN_CLOSE_WRITE | IN_MOVED_TO);
+            struct wl_event_loop *loop =
+                wl_display_get_event_loop(server->display);
+            server->cfg_watch =
+                wl_event_loop_add_fd(loop, ifd, WL_EVENT_READABLE,
+                                     config_reload_cb, server);
+            server->cfg_inotify_fd = ifd;
+        }
+    }
+
     return true;
 }
 
@@ -965,6 +1218,12 @@ void server_run(struct ywm_server *server, const char *startup_cmd) {
     wl_display_run(server->display);
 
     wl_display_destroy_clients(server->display);
+
+    if (server->cfg_watch)
+        wl_event_source_remove(server->cfg_watch);
+    if (server->cfg_inotify_fd >= 0)
+        close(server->cfg_inotify_fd);
+
     wlr_scene_node_destroy(&server->scene->tree.node);
     wlr_xcursor_manager_destroy(server->cursor_mgr);
     wlr_cursor_destroy(server->cursor);

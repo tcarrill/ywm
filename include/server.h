@@ -68,9 +68,15 @@ struct ywm_server {
     struct wlr_scene_tree *layer_background;
     struct wlr_scene_tree *layer_views;
     struct wlr_scene_tree *layer_overlay;
+    struct wlr_scene_rect *bg_rect;          /* solid-color background, or NULL */
 
     struct ywm_config cfg;
     struct ywm_menu   menu;
+
+    /* Config hot-reload via inotify */
+    int                      cfg_inotify_fd;
+    struct wl_event_source  *cfg_watch;
+    char                     cfg_path[512];
 
     /* Pointer interaction state */
     ywm_cursor_mode     cursor_mode;
@@ -79,6 +85,7 @@ struct ywm_server {
     int                 grab_width;          /* client width  at resize-grab start */
     int                 grab_height;         /* client height at resize-grab start */
     int                 grab_vx;             /* view->x at resize-grab start (left-edge) */
+    int                 grab_vy;             /* view->y at resize-grab start (top-edge) */
     uint32_t            resize_edges;        /* RESIZE_* bitmask */
 };
 
